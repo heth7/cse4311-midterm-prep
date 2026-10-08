@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Mock Midterm · CSE 4311</title>
+<script>try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="assets/style.css?v=4">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script defer src="assets/app.js?v=4"></script>
+<script defer src="assets/questions.js?v=4"></script>
+<style>
+  .timer { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .timer .clock { font: 700 1.6rem var(--mono); font-variant-numeric: tabular-nums; min-width: 5.2ch; }
+  .rubric { list-style: none; padding: 0; margin: 0 0 12px; }
+  .rubric li { display: flex; gap: 10px; align-items: flex-start; padding: 5px 0; margin: 0; }
+  .rubric input { width: 18px; height: 18px; margin-top: 4px; accent-color: var(--fwd); flex: none; }
+  .rubric .pts { margin-left: auto; color: var(--muted); font-size: .85rem; white-space: nowrap; }
+  #result { display: none; }
+  #result.show { display: block; }
+  .big { font-size: 2rem; font-weight: 750; letter-spacing: -.02em; }
+</style>
+</head>
+<body>
+<header class="nav"><div class="nav-in">
+  <a class="brand" href="index.html">CSE 4311 <span>Midterm</span></a>
+  <nav class="nav-links">
+    <a href="index.html">Plan</a>
+    <a href="cnn.html">Learn CNN</a>
+    <a href="review.html">Review &amp; practice</a>
+    <a href="mock.html" aria-current="page">Mock exam</a>
+  </nav>
+  <button class="icon-btn" data-theme-toggle aria-label="Toggle light or dark theme"></button>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Dress rehearsal</div>
+    <h1>Mock midterm</h1>
+    <p class="lead">Same format as the real thing: 12 multiple-choice questions, then 3 problems to solve by hand, plus one bonus CNN problem. All questions are new. Work on paper with these pages closed, and only open the solutions when you are done.</p>
+  </div>
+
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents"></aside>
+    <main>
+
+<section>
+<h2 id="rules" data-toc="Before you start">Before you start</h2>
+<div class="card">
+  <ul>
+    <li>Suggested time: <strong>50 minutes</strong>. About 12 minutes for Part A, 35 for Part B, 3 to check.</li>
+    <li>Part A gives <strong>no feedback</strong> until you press “Grade my exam” at the bottom, like a real paper.</li>
+    <li>For Part B, write full working: the graph, every forward value, every gradient.</li>
+  </ul>
+  <div class="timer">
+    <span class="clock" id="clock">00:00</span>
+    <button class="btn primary" id="t-start" type="button">Start timer</button>
+    <button class="btn" id="t-reset" type="button">Reset</button>
+    <span class="muted small" id="t-note"></span>
+  </div>
+</div>
+</section>
+
+<section>
+<h2 id="part-a" data-toc="Part A · 12 MCQs">Part A · Multiple choice (12 questions)</h2>
+<p>One choice per question. You can change an answer until you grade.</p>
+<div id="quiz-mock"></div>
+</section>
+
+<section>
+<h2 id="part-b" data-toc="Part B · Problems">Part B · Problems</h2>
+
+<div class="problem"><span class="pn">Problem 1 · Computational graph (10 points)</span>
+\[ f(x, y) = (x + y)\cdot \min\!\left(x \cdot y,\; \frac{y}{x}\right), \qquad x = 2,\; y = 6 \]
+<p>Draw the computational graph. Show all forward values and the backward partial derivative at each node. Compute the numerical values of \(\partial f/\partial x\) and \(\partial f/\partial y\).</p></div>
+<details class="sol"><summary>Solution and marking</summary><div class="sol-body">
+<div id="g-mock1"></div>
+<p><strong>Forward.</strong> \(a = x + y = 8\); \(b = x\cdot y = 12\); \(c = y/x = 3\); \(d = \min(12, 3) = 3\) (c is selected); \(f = a \cdot d = 24\).</p>
+<p><strong>Backward.</strong> \(\partial f/\partial a = d = 3\); \(\partial f/\partial d = a = 8\). The min sends 8 to \(c\) and 0 to \(b\).</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Path</th><th>Local derivative</th><th>× upstream</th><th class="num">Value</th></tr></thead>
+  <tbody>
+    <tr><td>x through \(a = x + y\)</td><td>1</td><td>× 3</td><td class="num bwd">3</td></tr>
+    <tr><td>y through \(a\)</td><td>1</td><td>× 3</td><td class="num bwd">3</td></tr>
+    <tr><td>x, y through \(b = x\cdot y\)</td><td>y, x</td><td>× 0</td><td class="num bwd">0</td></tr>
+    <tr><td>x through \(c = y/x\)</td><td>\(-y/x^2 = -1.5\)</td><td>× 8</td><td class="num bwd">−12</td></tr>
+    <tr><td>y through \(c\)</td><td>\(1/x = 0.5\)</td><td>× 8</td><td class="num bwd">4</td></tr>
+  </tbody>
+</table></div>
+\[ \frac{\partial f}{\partial x} = 3 + 0 - 12 = \mathbf{-9} \qquad \frac{\partial f}{\partial y} = 3 + 0 + 4 = \mathbf{7} \]
+<p><strong>Check.</strong> The active branch is \(f = (x + y)\dfrac{y}{x} = y + \dfrac{y^2}{x}\). So \(\partial f/\partial x = -y^2/x^2 = -9\) and \(\partial f/\partial y = 1 + 2y/x = 7\).</p>
+<ul class="rubric" data-rubric>
+  <li><input type="checkbox" data-pts="2"><span>Graph drawn with one operation per node</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>All forward values shown: 8, 12, 3, 3, 24</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>Min routes the gradient to y/x only, and branch gradients are added</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>∂f/∂x = −9</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>∂f/∂y = 7</span><span class="pts">2</span></li>
+</ul>
+</div></details>
+
+<div class="problem"><span class="pn">Problem 2 · Weight-matrix shapes (6 points)</span>
+<p>Consider a three-layer neural network with:</p>
+<ul>
+  <li>Layer 1: 10 neurons &nbsp;·&nbsp; Layer 2: 6 neurons &nbsp;·&nbsp; Layer 3: 2 neurons</li>
+  <li>Training set: 8 samples, each of dimension 4</li>
+  <li>\(\text{net} = XW\), with the bias included in the first row of each weight matrix</li>
+</ul>
+<p>(a) What are the shapes of the three weight matrices? (b) The last layer uses softmax. What is the shape of the output for the entire batch? (c) How many trainable parameters does the network have?</p></div>
+<details class="sol"><summary>Solution and marking</summary><div class="sol-body">
+<div class="tw"><table class="tight">
+  <thead><tr><th>Layer</th><th>Rows = inputs + 1</th><th>Columns = neurons</th><th>Shape</th><th class="num">Parameters</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>4 + 1 = 5</td><td>10</td><td><strong>5 × 10</strong></td><td class="num">50</td></tr>
+    <tr><td>2</td><td>10 + 1 = 11</td><td>6</td><td><strong>11 × 6</strong></td><td class="num">66</td></tr>
+    <tr><td>3</td><td>6 + 1 = 7</td><td>2</td><td><strong>7 × 2</strong></td><td class="num">14</td></tr>
+  </tbody>
+</table></div>
+<p>(b) <strong>8 × 2</strong>: one row per sample, two probabilities per row summing to 1. (c) 50 + 66 + 14 = <strong>130</strong>.</p>
+<p>Check for layer 1: X (8×5) · W₁ (5×10) = 8×10.</p>
+<ul class="rubric" data-rubric>
+  <li><input type="checkbox" data-pts="2"><span>W₁ is 5 × 10 (bias counted)</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>W₂ is 11 × 6 and W₃ is 7 × 2</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="1"><span>Output is 8 × 2</span><span class="pts">1</span></li>
+  <li><input type="checkbox" data-pts="1"><span>130 parameters</span><span class="pts">1</span></li>
+</ul>
+</div></details>
+
+<div class="problem"><span class="pn">Problem 3 · Softmax and cross-entropy (6 points)</span>
+<p>A network with two nodes in its last layer produces the output \(\begin{bmatrix}2\\0\end{bmatrix}\) for some input. The desired output is \(\begin{bmatrix}0\\1\end{bmatrix}\).</p>
+<p>(a) Apply softmax. (b) Compute the cross-entropy loss using the natural log. (c) What would the loss be if the desired output were \(\begin{bmatrix}1\\0\end{bmatrix}\) instead, and what does the comparison tell you?</p></div>
+<details class="sol"><summary>Solution and marking</summary><div class="sol-body">
+<p>(a) \(e^2 = 7.389\), \(e^0 = 1\), sum \(= 8.389\). \(\hat{y} = [0.881,\; 0.119]\).</p>
+<p>(b) \(L = -\ln(0.119) =\) <strong>2.127</strong>. Shortcut: \(\ln\hat{y}_2 = 0 - \ln 8.389 = -2.127\).</p>
+<p>(c) \(L = -\ln(0.881) =\) <strong>0.127</strong>. The same output costs about 17 times more when it is wrong: cross-entropy punishes confident wrong predictions heavily and rewards confident correct ones.</p>
+<ul class="rubric" data-rubric>
+  <li><input type="checkbox" data-pts="2"><span>Softmax gives [0.881, 0.119]</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>Loss is 2.127 (about 2.13)</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>Loss 0.127 for the other target, with the explanation</span><span class="pts">2</span></li>
+</ul>
+</div></details>
+
+<div class="problem"><span class="pn">Bonus · Convolution and pooling by hand (4 points)</span>
+<p>Using the 4×4 input and the 2×2 filter below (no padding, slide one step at a time, no flipping):</p>
+\[ g = \begin{bmatrix} 2 & 0 & 1 & 3 \\ 4 & 1 & 0 & 2 \\ 1 & 5 & 2 & 2 \\ 0 & 3 & 6 & 1 \end{bmatrix} \qquad f = \begin{bmatrix} 1 & 0 \\ -1 & 0 \end{bmatrix} \]
+<p>(a) Compute the activation map \(f * g\). (b) Apply 2×2 max pooling to the original input \(g\).</p></div>
+<details class="sol"><summary>Solution and marking</summary><div class="sol-body">
+<p>(a) Output size 4 − 2 + 1 = 3. With this filter each output is (top-left) − (bottom-left) of the patch, i.e. each entry minus the one below it.</p>
+\[ f * g = \begin{bmatrix} 2-4 & 0-1 & 1-0 \\ 4-1 & 1-5 & 0-2 \\ 1-0 & 5-3 & 2-6 \end{bmatrix} = \begin{bmatrix} -2 & -1 & 1 \\ 3 & -4 & -2 \\ 1 & 2 & -4 \end{bmatrix} \]
+<p>(b) Blocks {2, 0, 4, 1}, {1, 3, 0, 2}, {1, 5, 0, 3}, {2, 2, 6, 1}:</p>
+\[ \text{max pool} = \begin{bmatrix} 4 & 3 \\ 5 & 6 \end{bmatrix} \]
+<ul class="rubric" data-rubric>
+  <li><input type="checkbox" data-pts="2"><span>3×3 activation map correct</span><span class="pts">2</span></li>
+  <li><input type="checkbox" data-pts="2"><span>2×2 max-pooled output correct</span><span class="pts">2</span></li>
+</ul>
+</div></details>
+</section>
+
+<section>
+<h2 id="grade" data-toc="Grade it">Grade it</h2>
+<p>Tick the marking boxes inside each Part B solution for the steps you got right, then grade.</p>
+<p><button class="btn primary" id="grade-btn" type="button">Grade my exam</button></p>
+<div class="card" id="result" aria-live="polite"></div>
+
+<div class="next">
+  <a class="card" href="review.html"><span class="tag">Missed a problem?</span><h3>Review &amp; practice →</h3><p>Each problem type has a method box and more practice.</p></a>
+  <a class="card" href="index.html#last"><span class="tag">Morning of</span><h3>Last-look sheet →</h3><p>The one screen to read in the final 15 minutes.</p></a>
+</div>
+</section>
+
+    </main>
+  </div>
+  <footer class="foot"><span>CSE 4311 midterm prep · personal study notes written from the course material</span><a href="index.html">Back to the plan</a></footer>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  MP.quiz('#quiz-mock', MP.Q.mock, { id: 'mock', exam: true });
+
+  MP.graph('#g-mock1', {
+    w: 800, h: 330, hideBackward: false, label: 'Computational graph for f = (x + y)·min(x·y, y/x)',
+    nodes: [
+      { id: 'x', x: 100, y: 95, label: 'x', kind: 'in', tot: '∂f/∂x = 3 + 0 − 12 = −9', totDy: -46, totDx: 0 },
+      { id: 'y', x: 100, y: 235, label: 'y', kind: 'in', tot: '∂f/∂y = 3 + 0 + 4 = 7', totDy: 50, totDx: 0 },
+      { id: 'a', x: 290, y: 40, label: '+' },
+      { id: 'b', x: 290, y: 165, label: '×' },
+      { id: 'c', x: 290, y: 290, label: '÷' },
+      { id: 'd', x: 470, y: 230, label: 'min' },
+      { id: 'f', x: 630, y: 125, label: '×' },
+      { id: 'o', x: 745, y: 125, label: 'f', kind: 'out' }
+    ],
+    edges: [
+      { from: 'x', to: 'a', f: '2', b: '3', t: 0.42 },
+      { from: 'y', to: 'a', f: '6', b: '3', t: 0.86 },
+      { from: 'x', to: 'b', f: '2', b: '0', t: 0.62 },
+      { from: 'y', to: 'b', f: '6', b: '0', t: 0.62 },
+      { from: 'x', to: 'c', f: '2', b: '−12', t: 0.86 },
+      { from: 'y', to: 'c', f: '6', b: '4', t: 0.42 },
+      { from: 'b', to: 'd', f: '12', b: '0' },
+      { from: 'c', to: 'd', f: '3', b: '8' },
+      { from: 'a', to: 'f', f: '8', b: '3' },
+      { from: 'd', to: 'f', f: '3', b: '8' },
+      { from: 'f', to: 'o', f: '24', b: '1' }
+    ]
+  });
+
+  /* stopwatch */
+  var clock = document.getElementById('clock'), startBtn = document.getElementById('t-start'), note = document.getElementById('t-note');
+  var elapsed = 0, started = null, tick = null, LIMIT = 50 * 60;
+  function show() {
+    var s = elapsed + (started ? Math.floor((Date.now() - started) / 1000) : 0);
+    var m = Math.floor(s / 60), r = s % 60;
+    clock.textContent = (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+    note.textContent = s >= LIMIT ? 'Time is up. Finish the question you are on.' : '';
+  }
+  startBtn.addEventListener('click', function () {
+    if (started) { elapsed += Math.floor((Date.now() - started) / 1000); started = null; clearInterval(tick); startBtn.textContent = 'Resume'; }
+    else { started = Date.now(); tick = setInterval(show, 500); startBtn.textContent = 'Pause'; }
+    show();
+  });
+  document.getElementById('t-reset').addEventListener('click', function () {
+    elapsed = 0; started = null; clearInterval(tick); startBtn.textContent = 'Start timer'; show();
+  });
+
+  /* grading */
+  var links = { 'NumPy': 'review.html#numpy', 'Scales': 'review.html#scales', 'ML basics': 'review.html#intro', 'Single layer': 'review.html#single',
+    'Loss': 'review.html#softmax', 'Multi-layer': 'review.html#multi', 'Activations': 'review.html#multi', 'Backprop': 'review.html#graph', 'CNN': 'cnn.html' };
+  document.getElementById('grade-btn').addEventListener('click', function () {
+    var r = MP.grade('mock');
+    var got = 0, max = 0;
+    document.querySelectorAll('[data-rubric] input').forEach(function (cb) {
+      var p = +cb.dataset.pts; max += p; if (cb.checked) got += p;
+    });
+    var seen = {}, revisit = [];
+    r.missed.forEach(function (t) { if (!seen[t]) { seen[t] = 1; revisit.push('<a href="' + (links[t] || 'review.html') + '">' + t + '</a>'); } });
+    var box = document.getElementById('result');
+    box.innerHTML =
+      '<div class="big">' + r.right + ' / ' + r.total + ' <span class="muted" style="font-size:1rem;font-weight:500">Part A</span> &nbsp; ' +
+      got + ' / ' + max + ' <span class="muted" style="font-size:1rem;font-weight:500">Part B, self-marked</span></div>' +
+      (revisit.length ? '<p>Revisit: ' + revisit.join(' · ') + '</p>' : '<p>Every multiple-choice answer was right.</p>') +
+      (got < max ? '<p class="muted">For any Part B step you could not tick, redo that problem from a blank page after reading the solution. Reading a solution is not the same as producing it.</p>' : '') +
+      '<p class="muted small">Scroll up to Part A to see the explanation for each question.</p>';
+    box.classList.add('show');
+    box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  });
+});
+</script>
+</body>
+</html>

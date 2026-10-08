@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Learn CNNs · CSE 4311 Midterm</title>
+<script>try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="assets/style.css?v=4">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script defer src="assets/app.js?v=4"></script>
+<script defer src="assets/questions.js?v=4"></script>
+<script defer src="assets/cnn.js?v=4"></script>
+</head>
+<body>
+<header class="nav"><div class="nav-in">
+  <a class="brand" href="index.html">CSE 4311 <span>Midterm</span></a>
+  <nav class="nav-links">
+    <a href="index.html">Plan</a>
+    <a href="cnn.html" aria-current="page">Learn CNN</a>
+    <a href="review.html">Review &amp; practice</a>
+    <a href="mock.html">Mock exam</a>
+  </nav>
+  <button class="icon-btn" data-theme-toggle aria-label="Toggle light or dark theme"></button>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">The one new topic · about 45 minutes</div>
+    <h1>Convolutional neural networks, from zero</h1>
+    <p class="lead">This follows the lecture notebook <em>Deep Learning: CNN</em> in the same order (Part 1 deep learning, Part 2 convolutions and pooling, Part 3 CNNs), so everything here is something the exam can ask. Use the interactive demos; they do most of the teaching.</p>
+  </div>
+
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents"></aside>
+    <main>
+
+<section>
+<h2 id="start">Start here: the whole idea in one minute</h2>
+<p>You already know the multi-layer perceptron. Each neuron takes <strong>every</strong> input, multiplies each one by its own weight, adds them up, and applies an activation. A CNN changes exactly one thing:</p>
+<div class="call key"><span class="lbl">The one change</span>
+<p>Instead of one weight per input pixel, a neuron owns a <strong>tiny grid of weights</strong> (a <em>filter</em>, for example 3×3) and <strong>slides it across the image</strong>, taking a dot product at every position. Same filter, reused everywhere.</p></div>
+<p>Everything else is what you have already studied: activation functions, a loss, backpropagation with the chain rule, and gradient descent. So there are only three new words to learn tonight:</p>
+<div class="grid">
+  <div class="card"><h3>Convolution</h3><p>Slide a small filter over the input. At each stop, multiply matching numbers and add them up.</p></div>
+  <div class="card"><h3>Activation map</h3><p>The grid of numbers one filter produces. It lights up wherever the filter’s pattern appears.</p></div>
+  <div class="card"><h3>Pooling</h3><p>Shrink an activation map by keeping only the max (or average) of each small block. Nothing to learn.</p></div>
+</div>
+<div class="pipe" aria-label="CNN pipeline">
+  <div class="b">Image<small>input</small></div>
+  <div class="b conv">Conv<small>slide filters</small></div>
+  <div class="b act">Activation<small>e.g. ReLU</small></div>
+  <div class="b pool">Pool<small>shrink</small></div>
+  <div class="b conv">Conv</div>
+  <div class="b act">Activation</div>
+  <div class="b pool">Pool</div>
+  <div class="b fc">Fully connected<small>your MLP</small></div>
+  <div class="b">Output<small>class scores</small></div>
+</div>
+</section>
+
+<section>
+<h2 id="dl" data-toc="1 · Deep learning">Part 1 · What deep learning is</h2>
+<p>The notebook opens with deep learning in general before it reaches CNNs. This part is pure recall, which makes it easy multiple-choice material.</p>
+
+<div class="call key"><span class="lbl">Definition to memorise</span>
+<p>Deep learning is a modern evolution of neural networks that emphasises <strong>(1) very deep networks</strong>, <strong>(2) large unstructured datasets</strong> such as images, text and audio, and <strong>(3) modern compute</strong> such as GPUs.</p></div>
+
+<h3>Why deep models are powerful</h3>
+<ul>
+  <li><strong>Expressivity.</strong> A shallow network can represent any function, but it may need a very large hidden layer. A deep network represents complex mappings with <em>fewer parameters</em>.</li>
+  <li><strong>Representation learning.</strong> Each layer maps its input to a more abstract feature space, and those features are <em>learned from data</em>. Abstraction increases layer by layer.</li>
+  <li><strong>Scales with data.</strong> Classical algorithms such as linear regression stop improving after a certain dataset size. Deep models keep improving as you add data.</li>
+  <li><strong>Scales with hardware.</strong> Neural networks are mostly linear algebra, so GPUs give order-of-magnitude speedups.</li>
+  <li><strong>Neuroscience link.</strong> Deep networks compute in a hierarchy similar to the visual cortex.</li>
+</ul>
+
+<h3>Challenges and their remedies</h3>
+<div class="tw"><table>
+  <thead><tr><th>Challenge</th><th>Remedy named in the notes</th></tr></thead>
+  <tbody>
+    <tr><td>Vanishing gradients in very deep networks</td><td>Normalization (<strong>BatchNorm</strong> and variants), <strong>skip connections</strong> (ResNet)</td></tr>
+    <tr><td>Prone to overfitting</td><td><strong>Regularization</strong>, <strong>data augmentation</strong>, close monitoring of training</td></tr>
+    <tr><td>Needs a massive amount of data</td><td><strong>Transfer learning</strong> from pre-trained models</td></tr>
+  </tbody>
+</table></div>
+<p><strong>Pros:</strong> state of the art in many areas, combine with many algorithms (supervised and unsupervised), lots of specialised software and hardware. <strong>Cons:</strong> slow and hard to train, and they need a lot of data. Successes mentioned: speech recognition, machine translation, image generation (fake faces), and GPT-style text generation.</p>
+</section>
+
+<section>
+<h2 id="why" data-toc="Why not an MLP?">Why not just feed images to an MLP?</h2>
+<p>You could flatten an image and use fully connected layers. The MLP slides did exactly that for CIFAR-10: a 32×32×3 image becomes 3072 numbers. Three problems show up:</p>
+<ol>
+  <li><strong>Too many weights.</strong> 3072 inputs into 128 hidden neurons is already 393,216 weights. A 224×224×3 photo has 150,528 inputs, so 1000 neurons would need about 150 million weights in the first layer alone.</li>
+  <li><strong>Flattening destroys structure.</strong> Neighbouring pixels belong together, but a flattened vector treats pixel 5 and pixel 2005 the same way.</li>
+  <li><strong>No reuse.</strong> An edge in the top-left and the same edge in the bottom-right would have to be learned twice, with separate weights.</li>
+</ol>
+<p>Convolution fixes all three with two ideas that appear in the multi-layer handout’s description of CNNs:</p>
+<div class="grid">
+  <div class="card"><h3>Local receptive fields</h3><p>Each output looks at a small patch (say 3×3), not the whole image.</p></div>
+  <div class="card"><h3>Shared weights</h3><p>The same small filter is used at every position, so a feature is learned once and found anywhere.</p></div>
+</div>
+<div class="call exam"><span class="lbl">Exam phrasing</span>
+<p>“Convolutions work best on inputs containing attributes that are interesting, but whose <strong>location in the input is not important</strong>.” Images are the natural example. Conv layers can learn similar functions to fully connected layers with <strong>far fewer parameters</strong>.</p></div>
+</section>
+
+<section>
+<h2 id="conv1d" data-toc="2a · Convolution in 1-D">Part 2a · Convolution in one dimension</h2>
+<p>Start in 1-D, as the notebook does. You have a short <strong>filter</strong> \(f\) with \(n\) values and a longer <strong>signal</strong> \(g\) with \(m\) values.</p>
+\[ (f * g)[p] \;=\; \sum_{t=1}^{n} f[t]\; g[p+t] \]
+<p>In words: put the filter on top of the signal starting at position \(p\), multiply each filter value by the signal value under it, and add the products. That is a <strong>local dot product</strong>. Then shift the filter one step and repeat.</p>
+
+<div class="demo" id="demo-1d"></div>
+
+<div class="call key"><span class="lbl">Three facts from this demo</span>
+<ul>
+  <li><strong>Output length</strong> \(= m - n + 1\). The filter fits in that many positions. (7 − 3 + 1 = 5.)</li>
+  <li><strong>Meaning:</strong> \((f*g)[p]\) is large when the signal near \(p\) looks like the filter. It measures how much \(f\) is “found” in \(g\).</li>
+  <li><strong>Notes example result:</strong> filter [1, 0, −1] on [0, 1, 2, −1, 1, 3, 0] gives <code>[−2, 2, 1, −4, 1]</code>, using \(1\cdot g_p + 0\cdot g_{p+1} - 1\cdot g_{p+2}\).</li>
+</ul></div>
+
+<h3>What a filter can do</h3>
+<div class="tw"><table>
+  <thead><tr><th>Filter</th><th>Effect</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td><code>[−1, 1]</code></td><td><strong>Edge detection</strong></td><td>Output is 0 where the signal is flat and ±1 where it jumps. On audio it would find the boundaries of silence.</td></tr>
+    <tr><td>Small bell curve that sums to 1</td><td><strong>Smoothing</strong></td><td>Each output is a weighted average of neighbours, so the kinks are smoothed out.</td></tr>
+  </tbody>
+</table></div>
+<p>Switch the preset in the demo above to see both. So a convolution either <strong>changes the behaviour</strong> of a signal (smoothing) or <strong>extracts a characteristic</strong> from it (edges). The machine-learning move is to stop choosing the filter by hand and <strong>learn the filter values</strong>.</p>
+
+<div class="call trap"><span class="lbl">Trap: convolution vs cross-correlation</span>
+<p>What we just did is technically called <strong>cross-correlation</strong>. True mathematical convolution uses \(g[p-t]\), which flips the filter. Deep learning uses the un-flipped version and still calls it “convolution”.</p>
+<p>This matters for one detail in the notebook: the code cell <code>conv_naive([1,0,-1], [0,1,2,-1,1,3,0])</code> prints <code>[2, −2, −1, 4, −1]</code>, the <em>opposite sign</em> of the formula’s answer, because that code flips the filter. On the exam, slide and dot-product without flipping (the formula and the picture in the notes) unless the question explicitly says to flip, and write one line saying which definition you used.</p></div>
+</section>
+
+<section>
+<h2 id="conv2d" data-toc="2b · Convolution in 2-D">Part 2b · Convolution in two dimensions</h2>
+<p>For images the signal \(g\) is a grid and the filter \(f\) is a small grid. Slide the filter left to right, top to bottom. At each stop multiply the nine overlapping pairs and add them. Each stop gives one number of the output.</p>
+
+<div class="demo" id="demo-2d"></div>
+
+<div class="call key"><span class="lbl">Output size, plain case</span>
+<p>An \(N \times N\) input with an \(F \times F\) filter (no padding, moving one step at a time) gives an output of size \((N - F + 1) \times (N - F + 1)\). So 5×5 with a 3×3 filter gives 3×3. This is the animated picture in the notes.</p></div>
+
+<p>In a neural network the two roles are:</p>
+<ul>
+  <li>\(g\) = the <strong>input from the previous layer</strong> (the image, or earlier activation maps).</li>
+  <li>\(f\) = the <strong>learnable weights</strong>. A filter is a “feature” of the image: an edge, or later on something more complex.</li>
+</ul>
+
+<h3>The notes’ example: Sobel edge filters</h3>
+<div class="tw"><table>
+  <thead><tr><th>Filter</th><th>Values</th><th>High activation at</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sobel X</strong></td><td><code>[[1, 0, −1], [2, 0, −2], [1, 0, −1]]</code></td><td><strong>Vertical edges</strong> (brightness changes left ↔ right)</td></tr>
+    <tr><td><strong>Sobel Y</strong></td><td><code>[[1, 2, 1], [0, 0, 0], [−1, −2, −1]]</code></td><td><strong>Horizontal edges</strong> (brightness changes top ↔ bottom)</td></tr>
+  </tbody>
+</table></div>
+<p>Check it in the demo: the vertical-edge image gives a strong response with Sobel X and all zeros with Sobel Y, and the horizontal-edge image does the reverse. The notebook also combines them as the gradient magnitude \(\sqrt{g_x^2 + g_y^2}\), which lights up on edges of any direction.</p>
+<p class="muted small">How to remember which is which: Sobel X has a left column and a right column with opposite signs, so it compares left against right. A left-versus-right difference is what a vertical edge is.</p>
+</section>
+
+<section>
+<h2 id="layer" data-toc="The conv layer">The convolutional layer</h2>
+<p>Compare the two definitions side by side. They have the same shape on purpose.</p>
+<div class="tw"><table>
+  <thead><tr><th></th><th>Fully connected layer</th><th>Convolutional layer</th></tr></thead>
+  <tbody>
+    <tr><td>Formula</td><td>\(f(x) = \sigma(Wx)\)</td><td>\(f(x) = \text{conv}(W, x)\)</td></tr>
+    <tr><td>What runs in parallel</td><td>\(p\) neurons</td><td>\(p\) convolutions (filters)</td></tr>
+    <tr><td>Each \(w_k\) is</td><td>the weight vector of neuron \(k\)</td><td>the weights of filter \(k\)</td></tr>
+    <tr><td>Each one outputs</td><td>one number</td><td>one <strong>activation map</strong></td></tr>
+  </tbody>
+</table></div>
+
+<div class="call key"><span class="lbl">How the output is built</span>
+<ul>
+  <li>Each filter produces its own <strong>activation map</strong>.</li>
+  <li>A different filter produces a different activation map.</li>
+  <li>All the maps from one layer are <strong>stacked together</strong> into a multi-channel output.</li>
+</ul></div>
+
+<div class="pipe" aria-label="How filters become channels">
+  <div class="b">Input<small>H × W × C<sub>in</sub></small></div>
+  <div class="b conv">K filters<small>each F × F × C<sub>in</sub></small></div>
+  <div class="b pool">K activation maps<small>one per filter</small></div>
+  <div class="b">Output<small>H′ × W′ × K</small></div>
+</div>
+
+<h3>The three attributes of a conv layer</h3>
+<div class="tw"><table>
+  <thead><tr><th>Attribute</th><th>Meaning</th></tr></thead>
+  <tbody>
+    <tr><td><strong># input channels</strong></td><td>How many feature maps come in. 1 for grayscale, 3 for RGB, or whatever the previous layer produced.</td></tr>
+    <tr><td><strong># output channels</strong></td><td>How many feature maps go out. This <strong>equals the number of filters</strong> in the layer.</td></tr>
+    <tr><td><strong>kernel_size</strong></td><td>The size of each filter, for example 3×3 or 5×5.</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Multiple input channels</h3>
+<p>If the input has several channels (an RGB image has 3), each filter is not flat. It has the same depth as the input: a “3×3” filter on RGB is really 3×3×3 = 27 weights. It still slides only across width and height, the dot product now sums over all channels too, and it still produces <strong>one</strong> activation map.</p>
+
+<div class="demo" id="demo-size"></div>
+<div class="call know"><span class="lbl">Scope note</span>
+<p>The written notes only use the plain case (no padding, one step at a time), where the output size is \(N - F + 1\). The calculator also handles padding and stride in case they come up: \(\text{output} = (N + 2P - F)/S + 1\). Counting parameters as \((F \cdot F \cdot C_{in} + 1) \cdot K\) is a common exam extension of “convolution layers have much smaller parameters”.</p></div>
+</section>
+
+<section>
+<h2 id="pool" data-toc="Pooling">Pooling</h2>
+<p>A pooling layer applies a fixed, pre-defined operation over small regions of its input. It usually comes right after a convolution (and its activation).</p>
+
+<div class="demo" id="demo-pool"></div>
+
+<div class="tw"><table>
+  <thead><tr><th>Type</th><th>For each region, return…</th><th>Note</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Max pooling</strong></td><td>the largest value</td><td>The most common type</td></tr>
+    <tr><td><strong>Average pooling</strong></td><td>the mean value</td><td></td></tr>
+  </tbody>
+</table></div>
+
+<div class="call key"><span class="lbl">Four facts about pooling</span>
+<ul>
+  <li>It has <strong>no learnable weights</strong>.</li>
+  <li>It is applied to <strong>each activation map separately</strong>, so the number of channels does not change.</li>
+  <li>It <strong>reduces the spatial size</strong>. A 2×2 pool halves width and height (4×4 → 2×2).</li>
+  <li>The LeNet paper called it <strong>subsampling</strong>.</li>
+</ul></div>
+
+<h3>Why pool? Two purposes</h3>
+<ol>
+  <li><strong>Slight translation invariance.</strong> Inside a pooling window the exact location of a feature is not critical. Nudge the feature by a pixel and the max is the same, which makes detection more robust.</li>
+  <li><strong>More abstract representations.</strong> Together with convolutions, shrinking the maps lets later layers summarise larger areas of the image.</li>
+</ol>
+</section>
+
+<section>
+<h2 id="cnn" data-toc="3 · The CNN">Part 3 · Putting it together: the CNN</h2>
+<div class="call key"><span class="lbl">Definition</span>
+<p>A convolutional neural network is a composition of \(L\) layers, \(f(x) = f_L \circ f_{L-1} \circ \dots \circ f_1(x)\), where the layers <strong>contain convolutions</strong>. The final layer is often a <strong>fully connected</strong> output layer.</p></div>
+<p>Typically a CNN is made of consecutive <strong>convolution + activation + pooling</strong> layers grouped into blocks. The multi-layer handout writes the basic structure as:</p>
+<div class="pipe">
+  <div class="b">Input</div>
+  <div class="b conv">Conv</div>
+  <div class="b act">Activation</div>
+  <div class="b pool">Pool</div>
+  <div class="b fc">Fully connected</div>
+  <div class="b">Output</div>
+</div>
+
+<h3>Trace the shapes once (LeNet-style)</h3>
+<p>Being able to follow sizes through a network is the CNN version of the weight-matrix-shape problem you already practised.</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Layer</th><th>What it does</th><th>Output size</th><th>Rule used</th></tr></thead>
+  <tbody>
+    <tr><td>Input</td><td>grayscale image</td><td>32 × 32 × 1</td><td></td></tr>
+    <tr><td>Conv</td><td>6 filters, 5×5</td><td>28 × 28 × 6</td><td>32 − 5 + 1 = 28; 6 filters → 6 channels</td></tr>
+    <tr><td>Pool</td><td>2×2</td><td>14 × 14 × 6</td><td>halve width and height; channels unchanged</td></tr>
+    <tr><td>Conv</td><td>16 filters, 5×5</td><td>10 × 10 × 16</td><td>14 − 5 + 1 = 10</td></tr>
+    <tr><td>Pool</td><td>2×2</td><td>5 × 5 × 16</td><td>halve again</td></tr>
+    <tr><td>Flatten</td><td>unroll into a vector</td><td>400</td><td>5 · 5 · 16</td></tr>
+    <tr><td>Fully connected</td><td>ordinary MLP layers</td><td>120 → 84 → 10</td><td>10 outputs = 10 digit classes</td></tr>
+  </tbody>
+</table></div>
+<p>Notice the pattern: <strong>width and height shrink while the number of channels grows</strong>. The early layers hold fine spatial detail; the later layers hold many abstract features.</p>
+
+<h3>The algorithm box</h3>
+<div class="tw"><table>
+  <tbody>
+    <tr><th>Type</th><td>Supervised learning (regression and classification)</td></tr>
+    <tr><th>Model family</th><td>Compositions of convolutional, pooling and other types of layers</td></tr>
+    <tr><th>Objective function</th><td>Any differentiable objective</td></tr>
+    <tr><th>Optimizer</th><td>Gradient descent</td></tr>
+  </tbody>
+</table></div>
+<p>Training is the same backpropagation you know. The filter values are just weights, so the chain rule gives each one a gradient and gradient descent updates it.</p>
+</section>
+
+<section>
+<h2 id="famous" data-toc="LeNet and AlexNet">Two famous CNNs</h2>
+<div class="tw"><table>
+  <thead><tr><th></th><th>LeNet</th><th>AlexNet</th></tr></thead>
+  <tbody>
+    <tr><td>Who / when</td><td>LeCun, Bottou, Bengio, Haffner, 1998</td><td>Krizhevsky, Sutskever, Hinton, 2012</td></tr>
+    <tr><td>Task</td><td>Handwritten digit recognition (MNIST)</td><td>ImageNet image classification</td></tr>
+    <tr><td>Output</td><td><strong>10</strong> classes (digits 0–9)</td><td><strong>1000</strong> classes</td></tr>
+    <tr><td>Structure</td><td>Several conv and max-pooling (“subsampling”) layers, then a fully connected MLP</td><td>Multiple conv layers followed by max pooling; originally split across two GPUs because of hardware limits</td></tr>
+    <tr><td>Why it matters</td><td>Inspired the CNN architectures that followed</td><td>Started a new era on ImageNet; deeper CNNs later exceeded <strong>human performance</strong></td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="features" data-toc="Feature learning">CNNs and feature learning</h2>
+<p>Before neural networks, computer vision relied on <strong>hand-crafted features</strong>. Two names to recognise: <strong>SIFT</strong> (Scale-Invariant Feature Transform) and <strong>HOG</strong> (Histogram of Oriented Gradients). Designing such features is hard, and they may not be the best ones for a particular task. This is the “traditional computer vision pipeline” from the MLP slides: extract features by hand, then train a linear classifier.</p>
+<p>A CNN removes the hand-crafting. It extracts features at different levels of abstraction on its own, learned end-to-end with the classifier.</p>
+
+<h3>What each depth learns (Zeiler and Fergus, 2013)</h3>
+<div class="tw"><table>
+  <thead><tr><th>Layers</th><th>Responds to</th><th>Level</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Layer 1</strong></td><td>Coloured edges and blobs</td><td>Low</td></tr>
+    <tr><td><strong>Layers 2–3</strong></td><td>Object parts, such as the wheels of a car or the beak of a bird</td><td>Mid</td></tr>
+    <tr><td><strong>Layers 4–5</strong></td><td>Larger object parts and even entire objects</td><td>High</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Pros and cons of CNNs</h3>
+<ul>
+  <li><strong>Pro:</strong> they encode visual information efficiently and are used as universal visual feature extractors. It is common to start from an ImageNet-pretrained CNN.</li>
+  <li><strong>Pro:</strong> they are building blocks in larger pipelines and can be combined with other networks (for example a recurrent network) for complex tasks.</li>
+  <li><strong>Con:</strong> their main drawbacks are <strong>computational and data requirements</strong>.</li>
+</ul>
+</section>
+
+<section>
+<h2 id="byhand" data-toc="By-hand problems">By-hand problems</h2>
+<p>Do these on paper before opening the solutions. If the exam has a CNN calculation, it will look like one of these.</p>
+
+<div class="problem"><span class="pn">Problem 1 · 1-D convolution</span>
+<p>Filter \(f = [1, 2, 1]\), signal \(g = [1, 3, 0, 2, 4, 1]\). Compute \(f * g\) (slide and dot-product, no flipping). How long is the output?</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Length: 6 − 3 + 1 = <strong>4</strong>.</p>
+<ul>
+  <li>p = 0: 1·1 + 2·3 + 1·0 = 7</li>
+  <li>p = 1: 1·3 + 2·0 + 1·2 = 5</li>
+  <li>p = 2: 1·0 + 2·2 + 1·4 = 8</li>
+  <li>p = 3: 1·2 + 2·4 + 1·1 = 11</li>
+</ul>
+<p>Answer: <strong>[7, 5, 8, 11]</strong>. This filter is symmetric, so flipping it would change nothing.</p>
+</div></details>
+
+<div class="problem"><span class="pn">Problem 2 · 2-D convolution</span>
+<p>Slide the 2×2 filter over the 4×4 image (no padding, one step at a time). Give the activation map.</p>
+\[ g = \begin{bmatrix} 1 & 2 & 0 & 1 \\ 0 & 1 & 3 & 2 \\ 2 & 1 & 0 & 1 \\ 1 & 0 & 2 & 3 \end{bmatrix} \qquad f = \begin{bmatrix} 1 & 0 \\ 0 & -1 \end{bmatrix} \]</div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Size: 4 − 2 + 1 = 3, so the output is 3×3. With this filter each output is (top-left) − (bottom-right) of the 2×2 patch.</p>
+<ul>
+  <li>Row 0: 1 − 1 = 0, &nbsp; 2 − 3 = −1, &nbsp; 0 − 2 = −2</li>
+  <li>Row 1: 0 − 1 = −1, &nbsp; 1 − 0 = 1, &nbsp; 3 − 1 = 2</li>
+  <li>Row 2: 2 − 0 = 2, &nbsp; 1 − 2 = −1, &nbsp; 0 − 3 = −3</li>
+</ul>
+\[ f * g = \begin{bmatrix} 0 & -1 & -2 \\ -1 & 1 & 2 \\ 2 & -1 & -3 \end{bmatrix} \]
+</div></details>
+
+<div class="problem"><span class="pn">Problem 3 · Pooling</span>
+<p>Apply 2×2 max pooling, then 2×2 average pooling, to</p>
+\[ \begin{bmatrix} 1 & 3 & 2 & 4 \\ 5 & 6 & 1 & 2 \\ 7 & 2 & 9 & 0 \\ 1 & 4 & 3 & 8 \end{bmatrix} \]</div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Split into four non-overlapping 2×2 blocks: {1, 3, 5, 6}, {2, 4, 1, 2}, {7, 2, 1, 4}, {9, 0, 3, 8}.</p>
+\[ \text{max} = \begin{bmatrix} 6 & 4 \\ 7 & 9 \end{bmatrix} \qquad \text{average} = \begin{bmatrix} 3.75 & 2.25 \\ 3.5 & 5 \end{bmatrix} \]
+<p>This is the default example in the pooling demo above.</p>
+</div></details>
+
+<div class="problem"><span class="pn">Problem 4 · Shapes and parameters</span>
+<p>A 28×28 grayscale image goes through a conv layer with 8 filters of size 5×5 (no padding, one step at a time), then 2×2 max pooling. (a) What is the output size after the conv layer? (b) After pooling? (c) How many learnable parameters does each layer have, counting one bias per filter?</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<ul>
+  <li>(a) 28 − 5 + 1 = 24, and 8 filters give 8 channels: <strong>24 × 24 × 8</strong>.</li>
+  <li>(b) Pooling halves width and height and keeps channels: <strong>12 × 12 × 8</strong>.</li>
+  <li>(c) Conv: (5 · 5 · 1 + 1) · 8 = <strong>208</strong>. Pooling: <strong>0</strong>.</li>
+</ul>
+</div></details>
+
+<div class="problem"><span class="pn">Problem 5 · Why CNNs are cheaper</span>
+<p>A 100×100 RGB image is the input. Compare the number of weights in (a) a fully connected layer with 100 neurons and (b) a conv layer with 100 filters of size 3×3.</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<ul>
+  <li>(a) Inputs = 100 · 100 · 3 = 30,000. Weights = 30,000 · 100 = <strong>3,000,000</strong> (plus 100 biases).</li>
+  <li>(b) Each filter has 3 · 3 · 3 = 27 weights. 27 · 100 = <strong>2,700</strong> (plus 100 biases).</li>
+</ul>
+<p>Roughly a thousand times fewer, because each filter is small and reused at every position.</p>
+</div></details>
+</section>
+
+<section>
+<h2 id="cheat" data-toc="Cheat sheet">CNN cheat sheet</h2>
+<div class="card">
+<ul>
+  <li><strong>Deep learning</strong> = very deep networks + large unstructured data + GPUs.</li>
+  <li>Deep beats shallow because it represents complex functions with <strong>fewer parameters</strong>, and layers learn <strong>increasingly abstract</strong> features.</li>
+  <li>Vanishing gradients → BatchNorm, skip connections (ResNet). Overfitting → regularization, data augmentation. Little data → transfer learning.</li>
+  <li><strong>Convolution</strong> = slide a filter, take a local dot product. Large output = the filter’s pattern is present there.</li>
+  <li>Deep learning’s “convolution” is really <strong>cross-correlation</strong> (no flip).</li>
+  <li>Output size (plain case) = <strong>N − F + 1</strong>. 1-D: m − n + 1.</li>
+  <li>[−1, 1] detects edges. A bell-shaped filter smooths.</li>
+  <li><strong>Sobel X → vertical edges. Sobel Y → horizontal edges.</strong></li>
+  <li>Filter = <strong>learnable weights</strong>. Input g = output of the previous layer.</li>
+  <li>One filter → one <strong>activation map</strong>. Maps are stacked into channels.</li>
+  <li>Conv layer attributes: <strong># input channels, # output channels (= # filters), kernel size</strong>.</li>
+  <li>Use convolutions when a feature matters but its <strong>location does not</strong>. Far fewer parameters than fully connected.</li>
+  <li><strong>Pooling</strong>: max (most common) or average; <strong>no learnable weights</strong>; applied to each map separately; shrinks spatial size.</li>
+  <li>Pooling gives <strong>slight translation invariance</strong> and more abstract representations.</li>
+  <li>CNN = blocks of <strong>conv → activation → pool</strong>, then <strong>fully connected</strong>, then output.</li>
+  <li>CNN: supervised, any differentiable objective, trained by <strong>gradient descent</strong>.</li>
+  <li><strong>LeNet</strong> (1998, LeCun): digits, 10 classes. <strong>AlexNet</strong> (2012): ImageNet, 1000 classes, two GPUs.</li>
+  <li>Hand-crafted features before CNNs: <strong>SIFT, HOG</strong>.</li>
+  <li>Layer 1: edges and blobs. Layers 2–3: object parts. Layers 4–5: whole objects.</li>
+  <li>Main drawbacks: <strong>computation and data</strong>.</li>
+</ul>
+</div>
+</section>
+
+<section>
+<h2 id="quiz" data-toc="CNN quiz">CNN quiz</h2>
+<p>27 questions covering every heading of the CNN notebook. Aim for 24 or more, then use “Retry missed”.</p>
+<div id="quiz-cnn"></div>
+
+<div class="next">
+  <a class="card" href="review.html"><span class="tag">Next</span><h3>Review &amp; practice →</h3><p>The three long-answer problem types, cheat sheets for every other topic, and the MCQ drill.</p></a>
+  <a class="card" href="mock.html"><span class="tag">Then</span><h3>Mock midterm →</h3><p>12 MCQs and 3 problems in the real format.</p></a>
+</div>
+</section>
+
+    </main>
+  </div>
+  <footer class="foot"><span>CSE 4311 midterm prep · personal study notes written from the course material</span><a href="index.html">Back to the plan</a></footer>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  MP.conv1d('#demo-1d');
+  MP.conv2d('#demo-2d');
+  MP.sizeCalc('#demo-size');
+  MP.pool('#demo-pool');
+  MP.quiz('#quiz-cnn', MP.Q.cnn, { id: 'cnn' });
+});
+</script>
+</body>
+</html>

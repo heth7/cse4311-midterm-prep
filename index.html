@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>CSE 4311 Midterm Plan</title>
+<script>try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="assets/style.css?v=4">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script defer src="assets/app.js?v=4"></script>
+</head>
+<body>
+<header class="nav"><div class="nav-in">
+  <a class="brand" href="index.html">CSE 4311 <span>Midterm</span></a>
+  <nav class="nav-links">
+    <a href="index.html" aria-current="page">Plan</a>
+    <a href="cnn.html">Learn CNN</a>
+    <a href="review.html">Review &amp; practice</a>
+    <a href="mock.html">Mock exam</a>
+  </nav>
+  <button class="icon-btn" data-theme-toggle aria-label="Toggle light or dark theme"></button>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">CSE 4311 / 5368 · Neural Networks · Midterm</div>
+    <h1>The plan for the next 12 hours</h1>
+    <p class="lead">You scored well on both quizzes and solved the review sheet, so most of the exam is already in your head. There is one real gap, CNNs, and one skill to keep sharp, the by-hand problems. This plan spends your time in that order and gets you to bed.</p>
+  </div>
+
+  <div class="grid">
+    <a class="card" href="cnn.html"><span class="tag">1 · New material</span><h3>Learn CNN</h3><p>Convolution, activation maps, pooling, LeNet and AlexNet, from zero, with interactive demos and a 27-question quiz. About 45 minutes.</p></a>
+    <a class="card" href="review.html"><span class="tag">2 · Marks</span><h3>Review &amp; practice</h3><p>The three long-answer problem types with worked solutions, cheat sheets for every topic, the traps in the notes, and a 62-question MCQ drill.</p></a>
+    <a class="card" href="mock.html"><span class="tag">3 · Rehearsal</span><h3>Mock midterm</h3><p>12 MCQs and 3 problems in the real format, all new questions, with a timer and marking scheme.</p></a>
+  </div>
+
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents"></aside>
+    <main>
+
+<section>
+<h2 id="exam" data-toc="The exam">What is on the exam</h2>
+<div class="card">
+  <p><strong>Format:</strong> 12 multiple-choice questions, plus 2 or 3 short or long problems solved by hand.</p>
+  <div class="tw"><table>
+    <thead><tr><th>Topic on the midterm list</th><th>Where you stand</th><th>Study it here</th></tr></thead>
+    <tbody>
+      <tr><td>NumPy: broadcasting, universal functions, vectorization</td><td><span class="pill g">Quiz 1, done well</span></td><td><a href="review.html#numpy">Revision sheet</a></td></tr>
+      <tr><td>Measurement scales: nominal, ordinal, interval, ratio</td><td><span class="pill g">Quiz 1, done well</span></td><td><a href="review.html#scales">Revision sheet</a></td></tr>
+      <tr><td>Introduction to neural networks</td><td><span class="pill g">Quiz 1, done well</span></td><td><a href="review.html#intro">Revision sheet</a></td></tr>
+      <tr><td>Single-layer neural network</td><td><span class="pill g">Quiz 1, done well</span></td><td><a href="review.html#single">Revision sheet</a></td></tr>
+      <tr><td>Multi-layer perceptrons and back-propagation</td><td><span class="pill g">Quiz 2, done well</span></td><td><a href="review.html#graph">Problem type 1</a></td></tr>
+      <tr><td>Multi-layer neural network introduction</td><td><span class="pill w">Shapes question needed a second look</span></td><td><a href="review.html#shapes">Problem type 2</a></td></tr>
+      <tr><td>Deep neural network: CNN</td><td><span class="pill r">Not studied yet</span></td><td><a href="cnn.html">Learn CNN</a></td></tr>
+    </tbody>
+  </table></div>
+</div>
+<div class="call exam"><span class="lbl">Best guess at the problems</span>
+<p>The review sheet had three problems: a <strong>computational graph with backprop</strong>, <strong>weight-matrix shapes</strong>, and <strong>softmax with cross-entropy</strong>. The first two were also on Quiz 2. Expect those three with new numbers. With seven topics and 12 MCQs, expect one to three CNN questions, most likely at the level of “what is pooling” or “what are CNNs used for”.</p></div>
+</section>
+
+<section>
+<h2 id="plan" data-toc="The plan">The plan</h2>
+<p>Tick things off as you go. The boxes are saved in this browser.</p>
+
+<h3>Tonight · about 75 minutes, then sleep</h3>
+<div class="card"><ul class="plan">
+  <li><input type="checkbox" id="c1" data-key="t1"><label for="c1"><span class="t">Work through the CNN lesson</span><span class="d">Read it top to bottom and play with all three demos. This is the only new material, so it gets your freshest attention.</span></label><span class="m">45 min</span></li>
+  <li><input type="checkbox" id="c2" data-key="t2"><label for="c2"><span class="t">Take the CNN quiz</span><span class="d">27 questions at the bottom of the CNN page. Use “Retry missed” until it is clean.</span></label><span class="m">10 min</span></li>
+  <li><input type="checkbox" id="c3" data-key="t3"><label for="c3"><span class="t">Redo review-sheet Problem 1 from a blank page</span><span class="d">Draw the graph for f = (x·y)·min(x/y, x) without looking, then compare with the <a href="review.html#graph">worked solution</a>. If it comes out as 40 and 0, stop there.</span></label><span class="m">10 min</span></li>
+  <li><input type="checkbox" id="c4" data-key="t4"><label for="c4"><span class="t">Read the traps table once</span><span class="d">Nine places where the notes disagree with themselves or with the right answer. <a href="review.html#traps">Traps</a>.</span></label><span class="m">5 min</span></li>
+  <li><input type="checkbox" id="c5" data-key="t5"><label for="c5"><span class="t">Sleep</span><span class="d">The problems are chain-rule arithmetic done by hand. You will do that far better on seven hours than on four, and sleep is when tonight’s CNN material gets consolidated.</span></label><span class="m">7 h</span></li>
+</ul></div>
+
+<h3>Tomorrow morning · about 2 hours</h3>
+<div class="card"><ul class="plan">
+  <li><input type="checkbox" id="c6" data-key="m1"><label for="c6"><span class="t">Practice problems on paper</span><span class="d">From <a href="review.html#graph">Review &amp; practice</a>: graph problems B and C, shape problems 1 and 4, softmax problems 1 and 2. Write them out fully. Open each solution only after you have an answer.</span></label><span class="m">40 min</span></li>
+  <li><input type="checkbox" id="c7" data-key="m2"><label for="c7"><span class="t">Skim the six revision sheets</span><span class="d">NumPy, scales, intro, single-layer, multi-layer, backprop theory. You know this, so move fast and slow down only where something looks unfamiliar.</span></label><span class="m">20 min</span></li>
+  <li><input type="checkbox" id="c8" data-key="m3"><label for="c8"><span class="t">MCQ drill</span><span class="d">62 questions with instant explanations. <a href="review.html#mcq">Start the drill</a>.</span></label><span class="m">25 min</span></li>
+  <li><input type="checkbox" id="c9" data-key="m4"><label for="c9"><span class="t">Mock midterm, timed</span><span class="d">If you are short on time, do only Part B. <a href="mock.html">Open the mock</a>.</span></label><span class="m">35 min</span></li>
+  <li><input type="checkbox" id="c10" data-key="m5"><label for="c10"><span class="t">Short-answer bank, out loud</span><span class="d">Say each answer before opening it. <a href="review.html#short">Short answers</a>. Skip this if you are running late.</span></label><span class="m">10 min</span></li>
+</ul></div>
+
+<h3>Last 15 minutes before the exam</h3>
+<div class="card"><ul class="plan">
+  <li><input type="checkbox" id="c11" data-key="l1"><label for="c11"><span class="t">Read the last-look sheet below</span><span class="d">One screen. Nothing new.</span></label><span class="m">8 min</span></li>
+  <li><input type="checkbox" id="c12" data-key="l2"><label for="c12"><span class="t">Read the CNN cheat sheet</span><span class="d">It is the newest material, so it fades fastest. <a href="cnn.html#cheat">CNN cheat sheet</a>.</span></label><span class="m">5 min</span></li>
+</ul></div>
+
+<div class="call know"><span class="lbl">If you only have one hour in total</span>
+<p>CNN lesson sections “Start here”, “Convolution in 2-D”, “Pooling” and the cheat sheet (25 min). Then mock exam Part B (25 min). Then the last-look sheet (10 min).</p></div>
+</section>
+
+<section>
+<h2 id="tactics" data-toc="In the exam room">In the exam room</h2>
+<ul>
+  <li><strong>Show every value.</strong> The Quiz 2 key deducted marks when values were missing and gave partial credit for a correct method with a wrong number. Write each forward value and each gradient on the graph.</li>
+  <li><strong>State your convention</strong> on the shapes question: say what the rows and columns mean and show one dimension check, such as X(5×8)·W₁(8×9) = 5×9.</li>
+  <li><strong>Do the MCQs first</strong>, about a minute each. They are quick marks and they warm you up. Circle any you are unsure of and come back.</li>
+  <li><strong>Check gradients with algebra.</strong> For a min or max problem, simplify the active branch and differentiate directly. It takes 30 seconds and catches sign errors.</li>
+  <li><strong>A gradient of 0 can be correct.</strong> It happens when two branches cancel or when a max, min or ReLU blocks the path.</li>
+  <li><strong>Read whether numbers are scores or probabilities.</strong> Scores need softmax first. Probabilities go straight into the loss.</li>
+</ul>
+</section>
+
+<section>
+<h2 id="last" data-toc="Last-look sheet">Last-look sheet</h2>
+<div class="grid">
+  <div class="card">
+    <h3>Backprop on a graph</h3>
+    <ul>
+      <li>Gradient on an input = <strong>upstream × local</strong>.</li>
+      <li><strong>Add</strong>: passes it on. <strong>Multiply</strong>: swap the inputs.</li>
+      <li><strong>Max / min / ReLU</strong>: all to the winner, 0 to the rest.</li>
+      <li>\(a/b\): \(1/b\) and \(-a/b^2\). &nbsp; \(\sigma' = \sigma(1-\sigma)\).</li>
+      <li>A variable used twice: <strong>add</strong> its gradients.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Weight shapes</h3>
+    <ul>
+      <li>net = XW, bias in first row: <strong>(inputs + 1) × neurons</strong>.</li>
+      <li>net = Wx + b: <strong>neurons × inputs</strong>.</li>
+      <li>Next layer’s inputs = this layer’s neurons.</li>
+      <li>Batch output: <strong>samples × last-layer neurons</strong>.</li>
+      <li>Activations never change a shape.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Softmax and loss</h3>
+    <ul>
+      <li>\(\hat{y}_k = e^{z_k} / \sum_j e^{z_j}\)</li>
+      <li>\(L = -\sum_k y_k \ln \hat{y}_k\); one-hot → \(-\ln \hat{y}_{\text{true}}\)</li>
+      <li>\(e = 2.718\), \(e^2 = 7.389\), \(e^3 = 20.09\)</li>
+      <li>Scores [1, 2] → [0.269, 0.731]</li>
+      <li>MSE → regression. Cross-entropy → sigmoid or softmax.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Activations</h3>
+    <ul>
+      <li>Sigmoid (0, 1): vanishing gradients, binary output layer.</li>
+      <li>Tanh (−1, 1): zero-centred, still vanishes.</li>
+      <li>ReLU [0, ∞): reduces vanishing gradients, can die.</li>
+      <li>Leaky ReLU: small slope for negatives, no dying.</li>
+      <li>No activation → the network is one linear layer.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Single layer</h3>
+    <ul>
+      <li>Bias <strong>shifts</strong> the boundary. No bias → through the origin.</li>
+      <li>2 inputs → line. 3 inputs → plane.</li>
+      <li>Perceptron: step, not differentiable, update only on mistakes, needs linear separability. No XOR.</li>
+      <li>Loss going up → <strong>lower the learning rate</strong>.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>Scales and NumPy</h3>
+    <ul>
+      <li>Nominal → ordinal → interval → ratio adds identity, order, equal intervals, true zero.</li>
+      <li>°C is interval. Height, weight, age are ratio.</li>
+      <li><code>*</code> is element-wise; <code>np.dot</code> is the matrix product.</li>
+      <li>Broadcasting: prepend 1s, stretch size-1 axes.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>CNN</h3>
+    <ul>
+      <li>Convolution = slide a filter, local dot product. Output size N − F + 1.</li>
+      <li>One filter → one activation map. # filters = # output channels.</li>
+      <li>Pooling: max or average, <strong>no weights</strong>, shrinks size, slight translation invariance.</li>
+      <li>Conv → activation → pool → fully connected.</li>
+      <li>LeNet: digits, 10. AlexNet: ImageNet, 1000.</li>
+    </ul>
+  </div>
+  <div class="card">
+    <h3>ML basics</h3>
+    <ul>
+      <li>Four components: data, model, objective function, optimization algorithm.</li>
+      <li>Supervised = labeled. Unsupervised = unlabeled. Reinforcement = rewards.</li>
+      <li>Dendrites, synapses, soma, axon hillock, axon ↔ inputs, weights, sum, activation, output.</li>
+      <li>Backprop = chain rule, output to input.</li>
+    </ul>
+  </div>
+</div>
+<p class="muted">You already did the hard part by getting the quizzes right. Tonight is one new topic and some rehearsal. Good luck tomorrow.</p>
+</section>
+
+    </main>
+  </div>
+  <footer class="foot"><span>CSE 4311 midterm prep · personal study notes written from the course material</span><span>Built the night before, for the day of.</span></footer>
+</div>
+</body>
+</html>

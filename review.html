@@ -1,0 +1,847 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>Review &amp; Practice · CSE 4311 Midterm</title>
+<script>try{var t=localStorage.getItem('mp-theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<link rel="stylesheet" href="assets/style.css?v=4">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+<script defer src="assets/app.js?v=4"></script>
+<script defer src="assets/questions.js?v=4"></script>
+</head>
+<body>
+<header class="nav"><div class="nav-in">
+  <a class="brand" href="index.html">CSE 4311 <span>Midterm</span></a>
+  <nav class="nav-links">
+    <a href="index.html">Plan</a>
+    <a href="cnn.html">Learn CNN</a>
+    <a href="review.html" aria-current="page">Review &amp; practice</a>
+    <a href="mock.html">Mock exam</a>
+  </nav>
+  <button class="icon-btn" data-theme-toggle aria-label="Toggle light or dark theme"></button>
+</div></header>
+
+<div class="wrap">
+  <div class="hero">
+    <div class="kicker">Everything except CNNs</div>
+    <h1>Review and practice</h1>
+    <p class="lead">First the three long-answer problem types, because that is where the marks are. Then a fast revision sheet for every topic on the list, the traps hiding in the notes, a short-answer bank, and a 62-question MCQ drill.</p>
+  </div>
+
+  <div class="layout">
+    <aside class="toc" aria-label="Table of contents"></aside>
+    <main>
+
+<section>
+<h2 id="blueprint" data-toc="What to expect">What the exam will probably look like</h2>
+<p>The format is 12 multiple-choice questions plus 2 or 3 problems you solve by hand. The review sheet contained exactly three problems, and two of them are the same types as Quiz 2. Expect the same three with new numbers.</p>
+<div class="tw"><table>
+  <thead><tr><th>Likely problem</th><th>Seen before in</th><th>What earns the marks</th></tr></thead>
+  <tbody>
+    <tr><td><a href="#graph">1 · Computational graph and backprop</a></td><td>Quiz 2, review sheet, MLP slides</td><td>A drawn graph, every forward value, every backward gradient, final numbers</td></tr>
+    <tr><td><a href="#shapes">2 · Weight-matrix shapes</a></td><td>Quiz 2, review sheet</td><td>Correct shape for each layer, with the bias counted the way the question says</td></tr>
+    <tr><td><a href="#softmax">3 · Softmax and cross-entropy</a></td><td>Review sheet, single-layer notes</td><td>Softmax probabilities, then the loss with natural log</td></tr>
+  </tbody>
+</table></div>
+<div class="call exam"><span class="lbl">From the Quiz 2 grading key</span>
+<p>Any reasonable graph layout was accepted. Marks were lost when <strong>values were not shown</strong>, and partial credit was given for a correct method with a wrong number. So write every intermediate value, even the obvious ones.</p></div>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="graph" data-toc="1 · Computational graphs">Problem type 1 · Computational graph and backprop</h2>
+
+<h3>The method, every time</h3>
+<ol>
+  <li><strong>Break the expression into single operations.</strong> One node per operation, innermost first. Give each intermediate a name (a, b, c…).</li>
+  <li><strong>Forward pass, left to right.</strong> Write each value on its edge.</li>
+  <li><strong>Backward pass, right to left.</strong> Start with 1 at the output. At each node: <br><code>gradient on an input = upstream gradient × local derivative</code>.</li>
+  <li><strong>Add at branches.</strong> If a variable feeds several nodes, its gradient is the sum over all those paths.</li>
+  <li><strong>Sanity-check with algebra</strong> if you have a minute: simplify the function for the active branch and differentiate directly.</li>
+</ol>
+
+<h3>Local derivatives to know cold</h3>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Node</th><th>Local derivative</th><th>How to remember it</th></tr></thead>
+  <tbody>
+    <tr><td>\(a + b\)</td><td>1 to each input</td><td><strong>Distributor</strong>: passes the gradient through unchanged</td></tr>
+    <tr><td>\(a - b\)</td><td>\(+1\) to \(a\), \(-1\) to \(b\)</td><td>Flips the sign on the subtracted input</td></tr>
+    <tr><td>\(a \cdot b\)</td><td>\(b\) to \(a\), and \(a\) to \(b\)</td><td><strong>Swap</strong>: each input gets the other one’s value</td></tr>
+    <tr><td>\(a / b\)</td><td>\(1/b\) to \(a\), and \(-a/b^2\) to \(b\)</td><td>The denominator’s gradient is negative</td></tr>
+    <tr><td>\(\max(a, b)\), \(\min(a, b)\)</td><td>1 to the selected input, 0 to the other</td><td><strong>Router</strong>: only the winner gets the gradient</td></tr>
+    <tr><td>\(\text{ReLU}(z)\)</td><td>1 if \(z &gt; 0\), else 0</td><td>A gate that is open for positive inputs</td></tr>
+    <tr><td>\(\sigma(z)\)</td><td>\(\sigma(z)\,(1 - \sigma(z))\)</td><td>Uses the output you already computed</td></tr>
+    <tr><td>\(\tanh(z)\)</td><td>\(1 - \tanh^2(z)\)</td><td></td></tr>
+    <tr><td>\(e^{x}\)</td><td>\(e^{x}\)</td><td>Its own output</td></tr>
+    <tr><td>\(1/x\)</td><td>\(-1/x^2\)</td><td></td></tr>
+    <tr><td>\(x^2\)</td><td>\(2x\)</td><td></td></tr>
+    <tr><td>\(\ln x\)</td><td>\(1/x\)</td><td></td></tr>
+    <tr><td>\(c \cdot x\), \(x + c\)</td><td>\(c\), and 1</td><td>Constants</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Worked example 1 · the review-sheet problem</h3>
+<div class="problem"><span class="pn">Review sheet, Problem 1</span>
+\[ f(x, y) = (x \cdot y)\cdot \min\!\left(\frac{x}{y},\; x\right), \qquad x = 20,\; y = 2 \]
+<p>Draw the graph, show all forward values and backward gradients, and find \(\partial f/\partial x\) and \(\partial f/\partial y\).</p></div>
+
+<div id="g-review1"></div>
+
+<p><strong>Forward.</strong> Name the pieces: \(a = x\cdot y\), \(b = x/y\), \(c = \min(b, x)\), \(f = a \cdot c\).</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Node</th><th>Computation</th><th class="num">Value</th></tr></thead>
+  <tbody>
+    <tr><td>\(a = x \cdot y\)</td><td>20 × 2</td><td class="num fwd">40</td></tr>
+    <tr><td>\(b = x / y\)</td><td>20 ÷ 2</td><td class="num fwd">10</td></tr>
+    <tr><td>\(c = \min(b, x)\)</td><td>min(10, 20), so <strong>b is selected</strong></td><td class="num fwd">10</td></tr>
+    <tr><td>\(f = a \cdot c\)</td><td>40 × 10</td><td class="num fwd">400</td></tr>
+  </tbody>
+</table></div>
+
+<p><strong>Backward.</strong> Start with \(\partial f/\partial f = 1\) and walk right to left.</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Gradient</th><th>Local derivative</th><th>× upstream</th><th class="num">Value</th></tr></thead>
+  <tbody>
+    <tr><td>\(\partial f/\partial a\)</td><td>multiply: the other input, \(c = 10\)</td><td>× 1</td><td class="num bwd">10</td></tr>
+    <tr><td>\(\partial f/\partial c\)</td><td>multiply: the other input, \(a = 40\)</td><td>× 1</td><td class="num bwd">40</td></tr>
+    <tr><td>\(\partial f/\partial b\) (through min)</td><td>1, because b was the smaller one</td><td>× 40</td><td class="num bwd">40</td></tr>
+    <tr><td>x through min</td><td>0, because x was not selected</td><td>× 40</td><td class="num bwd">0</td></tr>
+    <tr><td>x through \(a\)</td><td>\(y = 2\)</td><td>× 10</td><td class="num bwd">20</td></tr>
+    <tr><td>y through \(a\)</td><td>\(x = 20\)</td><td>× 10</td><td class="num bwd">200</td></tr>
+    <tr><td>x through \(b\)</td><td>\(1/y = 0.5\)</td><td>× 40</td><td class="num bwd">20</td></tr>
+    <tr><td>y through \(b\)</td><td>\(-x/y^2 = -5\)</td><td>× 40</td><td class="num bwd">−200</td></tr>
+  </tbody>
+</table></div>
+<p><strong>Add the branches.</strong></p>
+\[ \frac{\partial f}{\partial x} = 20 + 20 + 0 = \mathbf{40} \qquad\qquad \frac{\partial f}{\partial y} = 200 + (-200) = \mathbf{0} \]
+<div class="call key"><span class="lbl">Algebra check</span>
+<p>Here \(x/y &lt; x\), so the min picks \(x/y\) and \(f = xy \cdot \frac{x}{y} = x^2\). Then \(\partial f/\partial x = 2x = 40\) and \(\partial f/\partial y = 0\). It matches. A zero answer is not a mistake here.</p></div>
+
+<h3>Worked example 2 · the Quiz 2 problem</h3>
+<div class="problem"><span class="pn">Quiz 2, Exercise 1</span>
+\[ y = \text{ReLU}(w_1 x_1 + w_2 x_2 + b), \qquad x_1 = 2,\; x_2 = 1,\; w_1 = 1,\; w_2 = 0.5,\; b = 1 \]</div>
+<div id="g-quiz2"></div>
+<p>Forward: \(1\cdot 2 = 2\), \(0.5 \cdot 1 = 0.5\), sum \(= 2.5\), plus bias \(= 3.5\), ReLU \(= 3.5\). Backward: ReLU passes 1 because \(3.5 &gt; 0\); both add nodes pass 1 along; each multiply node hands every input the <em>other</em> input.</p>
+\[ \frac{\partial y}{\partial w_1} = x_1 = 2 \qquad \frac{\partial y}{\partial w_2} = x_2 = 1 \qquad \frac{\partial y}{\partial b} = 1 \qquad \frac{\partial y}{\partial x_1} = w_1 = 1 \qquad \frac{\partial y}{\partial x_2} = w_2 = 0.5 \]
+
+<h3>Worked example 3 · the sigmoid graph from the MLP slides</h3>
+<p>The slides walk through \(f(x, w) = \dfrac{1}{1 + e^{-(w_0 x_0 + w_1 x_1 + w_2)}}\) with \(w_0 = 2,\; x_0 = -1,\; w_1 = -3,\; x_1 = -2,\; w_2 = -3\), one node at a time. Rework it once with the gradients hidden.</p>
+<div id="g-sigmoid"></div>
+<ul>
+  <li>\(1/x\) node: local \(= -1/1.37^2 = -0.53\). So \(1.00 \times -0.53 = -0.53\).</li>
+  <li>\(+1\) node: local \(= 1\). Still \(-0.53\).</li>
+  <li>\(\exp\) node: local \(= e^{-1} = 0.37\). So \(-0.53 \times 0.37 = -0.20\).</li>
+  <li>\(\times(-1)\) node: local \(= -1\). So \(+0.20\).</li>
+  <li>Both add nodes pass \(0.20\) to every input, so \(\partial f/\partial w_2 = 0.20\).</li>
+  <li>Multiply nodes swap: \(w_0\) gets \(x_0 \times 0.20 = -0.20\), \(x_0\) gets \(w_0 \times 0.20 = 0.40\), \(w_1\) gets \(x_1 \times 0.20 = -0.40\), \(x_1\) gets \(w_1 \times 0.20 = -0.60\).</li>
+</ul>
+<div class="call key"><span class="lbl">Shortcut</span>
+<p>The four nodes \(\times(-1)\), exp, \(+1\), \(1/x\) together are just a sigmoid, and \(\sigma' = \sigma(1-\sigma) = 0.73 \times 0.27 \approx 0.20\). One step instead of four. Use the long way only if the question draws the graph that way.</p></div>
+
+<h3>Practice · do these on paper</h3>
+
+<div class="problem"><span class="pn">Practice A · warm-up</span>
+<p>\(f(x, y, z) = (x + y)\cdot z\) with \(x = -2,\; y = 5,\; z = -4\). Find all three partial derivatives.</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Forward: \(q = x + y = 3\), \(f = q \cdot z = -12\).</p>
+<p>Backward: \(\partial f/\partial q = z = -4\), \(\partial f/\partial z = q = 3\). The add node passes \(-4\) to both inputs.</p>
+<p>\(\partial f/\partial x = -4\), \(\partial f/\partial y = -4\), \(\partial f/\partial z = 3\).</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice B · same shape as the review problem, with max</span>
+<p>\(f(x, y) = (x - y)\cdot \max\!\left(\dfrac{x}{y},\; y\right)\) with \(x = 10,\; y = 4\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p><strong>Forward:</strong> \(a = x - y = 6\); \(b = x/y = 2.5\); \(c = \max(2.5, 4) = 4\) (y is selected); \(f = a \cdot c = 24\).</p>
+<p><strong>Backward:</strong> \(\partial f/\partial a = c = 4\); \(\partial f/\partial c = a = 6\). The max sends 6 to \(y\) and 0 to \(b\), so nothing flows through the division.</p>
+<ul>
+  <li>x: through \(a\): \(4 \times 1 = 4\). Through \(b\): 0. Total <strong>4</strong>.</li>
+  <li>y: through \(a\): \(4 \times (-1) = -4\). Through max: \(6\). Through \(b\): 0. Total <strong>2</strong>.</li>
+</ul>
+<p><strong>Check:</strong> the active branch is \(f = (x - y)\,y = xy - y^2\), so \(\partial f/\partial x = y = 4\) and \(\partial f/\partial y = x - 2y = 2\).</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice C · three inputs</span>
+<p>\(f(x, y, z) = (x \cdot y + z)\cdot \max(y,\; z)\) with \(x = 3,\; y = -2,\; z = 4\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p><strong>Forward:</strong> \(a = xy = -6\); \(b = a + z = -2\); \(c = \max(-2, 4) = 4\) (z is selected); \(f = b \cdot c = -8\).</p>
+<p><strong>Backward:</strong> \(\partial f/\partial b = c = 4\); \(\partial f/\partial c = b = -2\). The add node passes 4 to both \(a\) and \(z\). The max sends \(-2\) to \(z\) and 0 to \(y\).</p>
+<ul>
+  <li>x: \(4 \times y = 4 \times (-2) =\) <strong>−8</strong></li>
+  <li>y: \(4 \times x = 12\), plus 0 through max: <strong>12</strong></li>
+  <li>z: \(4\) through the add, plus \(-2\) through the max: <strong>2</strong></li>
+</ul>
+</div></details>
+
+<div class="problem"><span class="pn">Practice D · a sigmoid neuron with a loss, then one update</span>
+<p>\(z = w x + b\), \(a = \sigma(z)\), \(L = (a - y)^2\). Given \(x = 1,\; w = 2,\; b = -2,\; y = 1\). Find \(\partial L/\partial w\) and \(\partial L/\partial b\), then take one gradient-descent step with \(\alpha = 1\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p><strong>Forward:</strong> \(z = 2 - 2 = 0\); \(a = \sigma(0) = 0.5\); \(L = (0.5 - 1)^2 = 0.25\).</p>
+<p><strong>Backward:</strong></p>
+<ul>
+  <li>\(\partial L/\partial a = 2(a - y) = -1\)</li>
+  <li>\(\partial a/\partial z = a(1 - a) = 0.25\), so \(\partial L/\partial z = -0.25\)</li>
+  <li>\(\partial L/\partial w = -0.25 \times x = \mathbf{-0.25}\) and \(\partial L/\partial b = -0.25 \times 1 = \mathbf{-0.25}\)</li>
+</ul>
+<p><strong>Update:</strong> \(w \leftarrow 2 - 1(-0.25) = 2.25\), \(b \leftarrow -2 - 1(-0.25) = -1.75\). Both move so that \(z\) grows and the output moves toward the target of 1.</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice E · ReLU neuron with a squared loss</span>
+<p>\(y = \text{ReLU}(w_1 x_1 + w_2 x_2 + b)\), \(L = (y - t)^2\). Given \(x_1 = 1,\; x_2 = 2,\; w_1 = 3,\; w_2 = -1,\; b = 0.5,\; t = 1\). Find the gradients of \(L\) with respect to \(w_1, w_2, b\), and the new weights after one step with \(\alpha = 0.1\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p><strong>Forward:</strong> \(z = 3 - 2 + 0.5 = 1.5\); \(y = 1.5\); \(L = 0.5^2 = 0.25\).</p>
+<p><strong>Backward:</strong> \(\partial L/\partial y = 2(y - t) = 1\). ReLU is open (\(z &gt; 0\)), so \(\partial L/\partial z = 1\).</p>
+<p>\(\partial L/\partial w_1 = x_1 = 1\), \(\partial L/\partial w_2 = x_2 = 2\), \(\partial L/\partial b = 1\).</p>
+<p><strong>Update:</strong> \(w_1 = 3 - 0.1 = 2.9\), \(w_2 = -1 - 0.2 = -1.2\), \(b = 0.5 - 0.1 = 0.4\).</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice F · what if the ReLU is off?</span>
+<p>Same neuron \(y = \text{ReLU}(w_1 x_1 + w_2 x_2 + b)\) with \(x_1 = 1,\; x_2 = 2,\; w_1 = 1,\; w_2 = -2,\; b = 1\). Find \(\partial y/\partial w_1\), \(\partial y/\partial w_2\), \(\partial y/\partial b\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>\(z = 1 - 4 + 1 = -2\), so \(y = \text{ReLU}(-2) = 0\). The local derivative of ReLU is 0 for a negative input, so the gradient is blocked: <strong>all three are 0</strong>.</p>
+<p>This is the “dying neuron” problem. With zero gradient the weights do not update. Leaky ReLU keeps a small slope for negative inputs to avoid it.</p>
+</div></details>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="shapes" data-toc="2 · Weight shapes">Problem type 2 · Weight-matrix shapes</h2>
+<div class="call key"><span class="lbl">The rule</span>
+<p>A weight matrix connects <strong>what comes into a layer</strong> to <strong>the neurons of that layer</strong>. One dimension is the number of inputs to the layer (plus 1 if the bias is folded in). The other is the number of neurons. The convention only decides which comes first. The number of training samples never appears in a weight shape.</p></div>
+
+<div class="tw"><table>
+  <thead><tr><th>Convention</th><th>Shape of W for a layer</th><th>Bias</th><th>Used in</th></tr></thead>
+  <tbody>
+    <tr><td>\(\text{net} = XW\)</td><td><strong>(inputs + 1) × neurons</strong></td><td>First row of W. X gets a column of 1s, so X is samples × (inputs + 1).</td><td>Review sheet, Quiz 2</td></tr>
+    <tr><td>\(\text{net} = Wx + b\)</td><td><strong>neurons × inputs</strong></td><td>Separate vector with one entry per neuron</td><td>MLP slides (CIFAR-10), multi-layer handout</td></tr>
+  </tbody>
+</table></div>
+<p><strong>The check that catches mistakes:</strong> write the multiplication and make sure the inner dimensions agree. \((5 \times 8)(8 \times 9) \rightarrow 5 \times 9\).</p>
+
+<h3>Worked example · the review-sheet problem</h3>
+<div class="problem"><span class="pn">Review sheet, Problem 2</span>
+<p>Two-layer network. Layer 1: 9 neurons. Layer 2: 3 neurons. 5 training samples, each of dimension 7. \(\text{net} = XW\), bias in the first row of the weight matrix. Give the shape of each weight matrix.</p></div>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Layer</th><th>Inputs + bias (rows)</th><th>Neurons (columns)</th><th>Weight matrix</th><th>Check</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>7 + 1 = 8</td><td>9</td><td><strong>W₁ : 8 × 9</strong></td><td>X (5×8) · W₁ (8×9) = 5×9</td></tr>
+    <tr><td>2</td><td>9 + 1 = 10</td><td>3</td><td><strong>W₂ : 10 × 3</strong></td><td>[1, H] (5×10) · W₂ (10×3) = 5×3</td></tr>
+  </tbody>
+</table></div>
+<p>The input to layer 2 is the output of layer 1, which has 9 values per sample, plus the bias 1. The final output for the batch is 5 × 3. Total parameters: 72 + 30 = 102.</p>
+
+<h3>Worked example · the Quiz 2 problem</h3>
+<p>Three layers with 12, 8 and 4 neurons, 10 samples of dimension 6, \(\text{net} = XW\), bias at each layer.</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Layer</th><th>Inputs + bias</th><th>Neurons</th><th>As (inputs+1) × neurons</th><th>As written in the posted key</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>6 + 1 = 7</td><td>12</td><td>7 × 12</td><td>12 × 7</td></tr>
+    <tr><td>2</td><td>12 + 1 = 13</td><td>8</td><td>13 × 8</td><td>8 × 13</td></tr>
+    <tr><td>3</td><td>8 + 1 = 9</td><td>4</td><td>9 × 4</td><td>4 × 9</td></tr>
+  </tbody>
+</table></div>
+<p>Output for the whole batch: <strong>10 × 4</strong>. ReLU and softmax change values, not dimensions. Each row holds 4 probabilities that sum to 1.</p>
+<div class="call trap"><span class="lbl">Trap: orientation</span>
+<p>The Quiz 2 key printed the shapes neurons-first (12 × 7) even though the question said \(\text{net} = XW\), and the grading notes said either orientation was accepted. The review sheet is more specific: “bias is included in the <strong>first row</strong>”. A bias row has one entry per neuron, so rows = inputs + 1 and columns = neurons, which gives 8 × 9.</p>
+<p><strong>What to write:</strong> the shape, what the rows and columns mean, and the dimension check. For example: “W₁ is 8 × 9 (8 = 7 inputs + 1 bias row, 9 = neurons). X(5×8)·W₁(8×9) = 5×9.” That is correct under either reading.</p></div>
+
+<h3>Practice</h3>
+<div class="problem"><span class="pn">Practice 1</span>
+<p>Three-layer network: 16, 8 and 2 neurons. 32 samples, each of dimension 10. \(\text{net} = XW\), bias in the first row. (a) Shapes of W₁, W₂, W₃? (b) Shape of the output for the whole batch? (c) Total number of trainable parameters?</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<ul>
+  <li>(a) W₁: (10 + 1) × 16 = <strong>11 × 16</strong>. W₂: (16 + 1) × 8 = <strong>17 × 8</strong>. W₃: (8 + 1) × 2 = <strong>9 × 2</strong>.</li>
+  <li>(b) <strong>32 × 2</strong>.</li>
+  <li>(c) 176 + 136 + 18 = <strong>330</strong>.</li>
+</ul>
+</div></details>
+
+<div class="problem"><span class="pn">Practice 2 · the other convention</span>
+<p>A network uses \(a^{(l)} = f(W^{(l)} a^{(l-1)} + b^{(l)})\) with 4 inputs, one hidden layer of 5 neurons and 3 outputs. Give the shapes of W⁽¹⁾, b⁽¹⁾, W⁽²⁾, b⁽²⁾ and the total parameter count.</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Here W is neurons × inputs and the bias is separate.</p>
+<p>W⁽¹⁾: <strong>5 × 4</strong>, b⁽¹⁾: <strong>5</strong>. W⁽²⁾: <strong>3 × 5</strong>, b⁽²⁾: <strong>3</strong>. Total: 20 + 5 + 15 + 3 = <strong>43</strong>.</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice 3 · from the slides</span>
+<p>CIFAR-10 images are 32×32×3. For the 3-layer network \(f(x) = W_3\,\text{act}(W_2\,\text{act}(W_1 x))\) with hidden sizes 512 and 128 and 10 classes, give the shape of each W.</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Input dimension: 32 · 32 · 3 = 3072. The slides use \(Wx\) with no bias, so W is (this layer) × (previous layer).</p>
+<p>W₁: <strong>512 × 3072</strong>. W₂: <strong>128 × 512</strong>. W₃: <strong>10 × 128</strong>.</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice 4 · backwards</span>
+<p>Under \(\text{net} = XW\) with the bias in the first row, a network has W₁ of shape 6 × 4 and W₂ of shape 5 × 2. How many features does each sample have, and how many neurons are in each layer?</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>W₁ rows = features + 1 = 6, so <strong>5 features</strong>. W₁ columns = <strong>4 neurons</strong> in layer 1. W₂ rows = 4 + 1 = 5, which is consistent. W₂ columns = <strong>2 neurons</strong> in layer 2.</p>
+</div></details>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="softmax" data-toc="3 · Softmax + cross-entropy">Problem type 3 · Softmax and cross-entropy</h2>
+<h3>The method</h3>
+<ol>
+  <li><strong>Softmax</strong> turns the raw outputs \(z\) into probabilities: \[ \hat{y}_k = \frac{e^{z_k}}{\sum_j e^{z_j}} \]</li>
+  <li><strong>Cross-entropy</strong> compares them with the target \(y\): \[ L = -\sum_k y_k \,\ln(\hat{y}_k) \]</li>
+  <li>If the target is <strong>one-hot</strong>, every term but one is multiplied by 0, so \(L = -\ln(\hat{y}_{\text{true class}})\).</li>
+</ol>
+<div class="call key"><span class="lbl">Numbers and a shortcut</span>
+<p>\(e \approx 2.718\), \(e^2 \approx 7.389\), \(e^3 \approx 20.09\), \(\ln 2 \approx 0.693\), \(\ln 3 \approx 1.099\).</p>
+<p>Without a calculator, use \(\ln \hat{y}_k = z_k - \ln\!\big(\sum_j e^{z_j}\big)\). For two outputs that differ by 1, the probabilities are always \(\tfrac{1}{1+e} = 0.269\) and \(\tfrac{e}{1+e} = 0.731\).</p></div>
+
+<h3>Worked example · the review-sheet problem</h3>
+<div class="problem"><span class="pn">Review sheet, Problem 3</span>
+<p>The last layer has two nodes and its output is \(\begin{bmatrix}1\\2\end{bmatrix}\). Using softmax, compute the cross-entropy loss with the natural log.</p></div>
+<p><strong>Step 1, softmax.</strong> \(e^1 = 2.718\), \(e^2 = 7.389\), sum \(= 10.107\).</p>
+\[ \hat{y} = \left[\frac{2.718}{10.107},\; \frac{7.389}{10.107}\right] = [\,0.269,\; 0.731\,] \qquad \ln\hat{y} = [\,-1.313,\; -0.313\,] \]
+<p><strong>Step 2, the loss.</strong> It depends on the desired output:</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Desired output</th><th>Loss</th><th class="num">Value</th></tr></thead>
+  <tbody>
+    <tr><td>\([0, 1]\) (class 2 is correct)</td><td>\(-\ln 0.731\)</td><td class="num"><strong>0.313</strong></td></tr>
+    <tr><td>\([1, 0]\) (class 1 is correct)</td><td>\(-\ln 0.269\)</td><td class="num"><strong>1.313</strong></td></tr>
+    <tr><td>\([1, 2]\), exactly as printed on the sheet</td><td>\(-(1\cdot\ln 0.269 + 2\cdot\ln 0.731) = 1.313 + 0.627\)</td><td class="num"><strong>1.940</strong></td></tr>
+  </tbody>
+</table></div>
+<div class="call trap"><span class="lbl">Trap: the sheet’s target is not one-hot</span>
+<p>The review sheet prints the desired output as \([1, 2]\), the same as the actual output. A real target for softmax is one-hot, so that looks like a placeholder. The method does not change: apply \(L = -\sum y_k \ln \hat{y}_k\) to whatever target the exam prints. If it is one-hot, only one term survives.</p></div>
+
+<h3>Practice</h3>
+<div class="problem"><span class="pn">Practice 1</span>
+<p>Network outputs \([2, 1, 0]\). The first class is the correct one. Find the softmax probabilities and the loss.</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>\(e^2 + e^1 + e^0 = 7.389 + 2.718 + 1 = 11.107\).</p>
+<p>\(\hat{y} = [0.665,\; 0.245,\; 0.090]\). \(L = -\ln 0.665 =\) <strong>0.408</strong>.</p>
+<p>Shortcut: \(\ln \hat{y}_1 = 2 - \ln 11.107 = 2 - 2.408 = -0.408\).</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice 2</span>
+<p>Network outputs \([3, 1]\). The desired output is \([0, 1]\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>\(e^3 + e^1 = 20.086 + 2.718 = 22.804\). \(\hat{y} = [0.881,\; 0.119]\).</p>
+<p>\(L = -\ln 0.119 =\) <strong>2.127</strong>. The network was confident and wrong, so the loss is large. If the target had been \([1, 0]\), the loss would be only \(-\ln 0.881 = 0.127\).</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice 3</span>
+<p>A 3-class network outputs \([0, 0, 0]\). What is the loss, whichever class is correct?</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>Equal scores give equal probabilities, \(\tfrac13\) each. \(L = -\ln\tfrac13 = \ln 3 =\) <strong>1.099</strong>. A network that knows nothing about \(K\) classes has loss \(\ln K\).</p>
+</div></details>
+
+<div class="problem"><span class="pn">Practice 4 · no softmax needed</span>
+<p>The predicted <em>probabilities</em> are \(\hat{y} = [0.6,\; 0.3,\; 0.1]\) and the true class is the first. Find the loss. Then find it for a binary classifier that outputs \(\hat{y} = 0.8\) when (a) \(y = 1\) and (b) \(y = 0\).</p></div>
+<details class="sol"><summary>Solution</summary><div class="sol-body">
+<p>These already sum to 1, so do <strong>not</strong> apply softmax again. \(L = -\ln 0.6 =\) <strong>0.511</strong>. This is the example in the single-layer notes.</p>
+<p>Binary cross-entropy: \(L = -[\,y\ln\hat{y} + (1-y)\ln(1-\hat{y})\,]\).</p>
+<ul>
+  <li>(a) \(y = 1\): \(-\ln 0.8 =\) <strong>0.223</strong></li>
+  <li>(b) \(y = 0\): \(-\ln 0.2 =\) <strong>1.609</strong></li>
+</ul>
+</div></details>
+
+<div class="call know"><span class="lbl">If they ask for the gradient</span>
+<p>For softmax followed by cross-entropy, \(\dfrac{\partial L}{\partial z} = \hat{y} - y\). In the review problem with target \([0, 1]\): \([0.269 - 0,\; 0.731 - 1] = [0.269,\; -0.269]\). The notes give the weight gradients as \(\dfrac{\partial L}{\partial W} = (\hat{y} - y)\,x^{\top}\) and \(\dfrac{\partial L}{\partial b} = \hat{y} - y\).</p></div>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="more" data-toc="Other by-hand problems">Other by-hand problems that could appear</h2>
+<p>Less likely than the three above, but each one is worked in the notes or was set as homework.</p>
+
+<h3>Perceptron update rule</h3>
+<p>\(\hat{y} = 1\) if \(z \ge 0\), else 0. For each example: \(w \leftarrow w + \eta\,(y - \hat{y})\,x\) and \(b \leftarrow b + \eta\,(y - \hat{y})\). Correct prediction means no change.</p>
+<p>The notes train an AND gate from \(w = (0, 0),\; b = 0,\; \eta = 1\). Epoch 1:</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Input</th><th>Target</th><th>z</th><th>ŷ</th><th>Result</th><th>w after</th><th>b after</th></tr></thead>
+  <tbody>
+    <tr><td>(0, 0)</td><td>0</td><td>0</td><td>1</td><td>wrong, y − ŷ = −1</td><td>(0, 0)</td><td>−1</td></tr>
+    <tr><td>(0, 1)</td><td>0</td><td>−1</td><td>0</td><td>correct</td><td>(0, 0)</td><td>−1</td></tr>
+    <tr><td>(1, 0)</td><td>0</td><td>−1</td><td>0</td><td>correct</td><td>(0, 0)</td><td>−1</td></tr>
+    <tr><td>(1, 1)</td><td>1</td><td>−1</td><td>0</td><td>wrong, y − ŷ = +1</td><td>(1, 1)</td><td>0</td></tr>
+  </tbody>
+</table></div>
+<p>After epoch 1 the model is \(w = (1, 1),\; b = 0\). Test it: (0, 0) gives \(z = 0\), so ŷ = 1, which is wrong, so training continues. Note that \(z = 0\) counts as class 1.</p>
+<details class="sol"><summary>The rest of the training (the “finish it” homework)</summary><div class="sol-body">
+<div class="tw"><table class="tight">
+  <thead><tr><th>After epoch</th><th>w</th><th>b</th><th>Updates made</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>(1, 1)</td><td>0</td><td>2</td></tr>
+    <tr><td>2</td><td>(2, 1)</td><td>−1</td><td>3</td></tr>
+    <tr><td>3</td><td>(2, 1)</td><td>−2</td><td>3</td></tr>
+    <tr><td>4</td><td>(2, 2)</td><td>−2</td><td>2</td></tr>
+    <tr><td>5</td><td>(2, 1)</td><td>−3</td><td>1</td></tr>
+    <tr><td>6</td><td>(2, 1)</td><td>−3</td><td>0, converged</td></tr>
+  </tbody>
+</table></div>
+<p>Final model: \(z = 2x_1 + x_2 - 3\). Check: (0,0) → −3 → 0. (0,1) → −2 → 0. (1,0) → −1 → 0. (1,1) → 0 → 1. All four correct. It converges because AND is linearly separable.</p>
+</div></details>
+
+<h3>One gradient-descent step for linear regression</h3>
+<p>Data from the notes: \((x, y) = (1, 2)\) and \((2, 4)\). Model \(z = wx + b\), start at \(w = 0,\; b = 0\), using the notes’ gradients \(\partial L/\partial w = \sum (z_i - y_i)\,x_i\) and \(\partial L/\partial b = \sum (z_i - y_i)\).</p>
+<ul>
+  <li>Predictions: \(z = 0, 0\). Errors: \(-2,\; -4\). Starting MSE \(= (4 + 16)/2 = 10\).</li>
+  <li>\(\partial L/\partial w = (-2)(1) + (-4)(2) = -10\). \(\partial L/\partial b = -6\).</li>
+  <li>With \(\alpha = 0.5\): \(w = 5,\; b = 3\). New predictions 8 and 13, MSE \(= 58.5\). The loss went <strong>up</strong>: overshoot.</li>
+  <li>With \(\alpha = 0.1\): \(w = 1,\; b = 0.6\). New predictions 1.6 and 2.6, MSE \(= 1.06\). The loss went down.</li>
+</ul>
+<div class="call key"><span class="lbl">The lesson the notes draw</span>
+<p>When you overshoot, the direction (the gradient) is fine and the step size is too large. The first thing to fix is the <strong>learning rate</strong>. Gradient descent has converged when the gradient is approximately 0.</p></div>
+
+<h3>Forward pass through a small network</h3>
+<p>A hidden layer lets a network solve XOR. One set of weights that works: \(h_1 = \text{ReLU}(x_1 + x_2)\), \(h_2 = \text{ReLU}(x_1 + x_2 - 1)\), \(y = h_1 - 2h_2\).</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>x₁</th><th>x₂</th><th>h₁</th><th>h₂</th><th>y = h₁ − 2h₂</th><th>XOR</th></tr></thead>
+  <tbody>
+    <tr><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td><td>0</td></tr>
+    <tr><td>0</td><td>1</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+    <tr><td>1</td><td>0</td><td>1</td><td>0</td><td>1</td><td>1</td></tr>
+    <tr><td>1</td><td>1</td><td>2</td><td>1</td><td>0</td><td>0</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Single neuron with a step activation</h3>
+<p>The notebook exercises: design AND and OR, and evaluate a given neuron.</p>
+<ul>
+  <li><strong>AND:</strong> \(w = (1, 1),\; b = -1.5\). Only (1, 1) gives \(z \ge 0\).</li>
+  <li><strong>OR:</strong> \(w = (1, 1),\; b = -0.5\). Only (0, 0) gives \(z &lt; 0\).</li>
+  <li><strong>Evaluate</strong> \(z = 2x_1 - x_2 - 1\): (1, 0) → \(z = 1\) → 1. &nbsp; (0, 2) → \(z = -3\) → 0. &nbsp; (2, 1) → \(z = 2\) → 1.</li>
+</ul>
+
+<h3>Rewrite a loop with NumPy</h3>
+<p>Quiz 1 asked for this. The pattern is always: drop the index and apply the expression to the whole array.</p>
+<pre><code># loop version
+for i in range(len(A)):
+    B[i] = A[i] ** 2 + 2 * A[i] + 1
+
+# vectorized
+B = A ** 2 + 2 * A + 1          # note ** for power, not ^</code></pre>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Loop that does…</th><th>Vectorized form</th></tr></thead>
+  <tbody>
+    <tr><td>sum of <code>a[i] * b[i]</code></td><td><code>np.dot(a, b)</code></td></tr>
+    <tr><td>sum of squares</td><td><code>np.sum(A ** 2)</code></td></tr>
+    <tr><td>replace negatives with 0 (ReLU)</td><td><code>np.maximum(0, A)</code></td></tr>
+    <tr><td>1 where A ≥ 0, else 0 (step)</td><td><code>np.where(A &gt;= 0, 1, 0)</code></td></tr>
+    <tr><td>sigmoid of every element</td><td><code>1 / (1 + np.exp(-A))</code></td></tr>
+  </tbody>
+</table></div>
+<p class="muted">For by-hand convolution and pooling problems, see the <a href="cnn.html#byhand">CNN page</a>.</p>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="numpy" data-toc="Revise: NumPy">Revision · NumPy, broadcasting, ufuncs, vectorization</h2>
+<ul>
+  <li>NumPy is an open-source Python package for <strong>multidimensional arrays</strong>, designed for scientific computing. Main class: <code>ndarray</code>.</li>
+  <li><strong>All elements of an array must be the same type.</strong> An <code>ndarray</code> is <strong>not</strong> a Python list.</li>
+</ul>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Attribute / function</th><th>Gives</th></tr></thead>
+  <tbody>
+    <tr><td><code>a.ndim</code></td><td>number of dimensions</td></tr>
+    <tr><td><code>a.shape</code></td><td>tuple with the size along each dimension</td></tr>
+    <tr><td><code>a.size</code></td><td>total number of elements</td></tr>
+    <tr><td><code>a.dtype</code></td><td>type of the elements</td></tr>
+    <tr><td><code>np.zeros((3,7))</code>, <code>np.ones((3,2))</code></td><td>arrays of 0s or 1s with that shape</td></tr>
+    <tr><td><code>np.arange(0, 1.1, .2)</code></td><td>like <code>range</code>, with a step: [0, 0.2, 0.4, 0.6, 0.8, 1.0]</td></tr>
+    <tr><td><code>np.linspace(.1, .7, 5)</code></td><td>5 evenly spaced numbers including both ends</td></tr>
+    <tr><td><code>a.reshape(3, 2)</code></td><td>same data, new shape</td></tr>
+    <tr><td><code>a.ravel()</code></td><td>flattens to 1-D</td></tr>
+  </tbody>
+</table></div>
+<div class="call key"><span class="lbl">Element-wise versus matrix product</span>
+<p><strong>Every arithmetic operator is element-wise</strong>, including <code>*</code> and <code>/</code>. The matrix product needs <code>np.dot(a, b)</code>.</p>
+<p>With a = [[1,2],[9,8]] and b = [[6,5],[2,4]]: <code>a * b</code> = [[6,10],[18,32]] but <code>np.dot(a, b)</code> = [[10,13],[70,77]]. And <code>np.dot</code> of two 2×3 arrays is an error, because the inner dimensions (3 and 2) do not match.</p></div>
+<p><strong>Universal functions</strong> (ufuncs) such as <code>np.sin</code>, <code>np.cos</code>, <code>np.exp</code>, <code>np.sqrt</code> operate element-wise on an array and return an array.</p>
+
+<h3>Broadcasting</h3>
+<p>Broadcasting is how NumPy does arithmetic between arrays of <strong>different shapes</strong>. Two rules:</p>
+<ol>
+  <li>If the arrays have different numbers of dimensions, <strong>prepend 1s</strong> to the shape of the smaller one.</li>
+  <li>An axis of <strong>size 1 is stretched</strong> (copied) to match the other array along that axis.</li>
+</ol>
+<p>After that, every axis must match, otherwise it is an error. Line the shapes up from the right:</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Shapes</th><th>After rule 1</th><th>Result</th></tr></thead>
+  <tbody>
+    <tr><td>(2, 2, 3) + (3,)</td><td>(2, 2, 3) + (1, 1, 3)</td><td><strong>(2, 2, 3)</strong>, the notes’ example</td></tr>
+    <tr><td>(3, 1) * (3,)</td><td>(3, 1) * (1, 3)</td><td><strong>(3, 3)</strong>, the notes’ second example</td></tr>
+    <tr><td>(4, 3) + (3,)</td><td>(4, 3) + (1, 3)</td><td><strong>(4, 3)</strong></td></tr>
+    <tr><td>(4, 3) + (4,)</td><td>(4, 3) + (1, 4)</td><td><strong>Error</strong>: 3 versus 4</td></tr>
+    <tr><td>(2, 1, 3) + (4, 1)</td><td>(2, 1, 3) + (1, 4, 1)</td><td><strong>(2, 4, 3)</strong></td></tr>
+    <tr><td>array + scalar</td><td></td><td>the scalar is applied to every element</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Vectorization</h3>
+<p>Applying an operation to the whole array at once instead of looping. In the notes, <code>np.dot</code> on 10 million elements took about 9 ms and the Python loop about 3.2 s.</p>
+<div class="call trap"><span class="lbl">Trap: (5,) is not a column vector</span>
+<p><code>np.random.randn(5)</code> has shape <code>(5,)</code>. Its transpose is the same thing, and <code>np.dot(a, a.T)</code> is a single number. Use <code>np.random.randn(5, 1)</code> to get a real 5×1 column: then <code>a.T</code> is 1×5, <code>np.dot(a.T, a)</code> is 1×1 and <code>np.dot(a, a.T)</code> is 5×5.</p></div>
+</section>
+
+<section>
+<h2 id="scales" data-toc="Revise: measurement scales">Revision · Measurement scales</h2>
+<p>Each scale keeps everything from the one before and adds one property.</p>
+<div class="tw"><table>
+  <thead><tr><th>Scale</th><th>Identity</th><th>Order</th><th>Equal intervals</th><th>True zero</th><th>Valid operations</th><th>Examples from the notes</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Nominal</strong></td><td>✓</td><td></td><td></td><td></td><td>= ≠</td><td>gender; red, green, blue; dog, cat, bird</td></tr>
+    <tr><td><strong>Ordinal</strong></td><td>✓</td><td>✓</td><td></td><td></td><td>&lt; &gt;</td><td>very unsatisfied … very satisfied; cold, warm, hot</td></tr>
+    <tr><td><strong>Interval</strong></td><td>✓</td><td>✓</td><td>✓</td><td></td><td>+ −</td><td>temperature in °C; clock time (10:30 AM)</td></tr>
+    <tr><td><strong>Ratio</strong></td><td>✓</td><td>✓</td><td>✓</td><td>✓</td><td>+ − × ÷</td><td>height, weight, duration, age</td></tr>
+  </tbody>
+</table></div>
+<ul>
+  <li><strong>Identity</strong>: each value has a unique meaning. <strong>Order</strong>: values can be ranked. <strong>Equal intervals</strong>: units along the scale are equal. <strong>True zero</strong>: zero means none of the quantity.</li>
+  <li>Nominal and ordinal are the two <strong>categorical</strong> types.</li>
+  <li>Interval has no true zero, so ratios mean nothing. Is 40 °C twice as hot as 20 °C? Convert to Fahrenheit (104 vs 68) and the “twice” is gone.</li>
+  <li><strong>Why the scale matters:</strong> it decides which operations and statistics are valid. Pick the wrong one and you do arithmetic that has no meaning.</li>
+</ul>
+<details class="sol"><summary>Quick drill: name the scale</summary><div class="sol-body">
+<div class="tw"><table class="tight">
+  <tbody>
+    <tr><td>ZIP code, jersey number, blood type</td><td><strong>Nominal</strong> (numbers used only as labels)</td></tr>
+    <tr><td>Letter grade A–F, shirt size S/M/L, finishing position in a race, education level</td><td><strong>Ordinal</strong></td></tr>
+    <tr><td>Calendar year, temperature in °F, time of day</td><td><strong>Interval</strong></td></tr>
+    <tr><td>Income, number of children, distance, temperature in kelvin, time taken to finish</td><td><strong>Ratio</strong></td></tr>
+  </tbody>
+</table></div>
+</div></details>
+</section>
+
+<section>
+<h2 id="intro" data-toc="Revise: intro to NN">Revision · Machine learning and the neuron</h2>
+<ul>
+  <li><strong>AI ⊃ Machine learning ⊃ Deep learning.</strong> AI also includes rule-based systems, search and planning, and robotics.</li>
+  <li><strong>Machine learning</strong> (Arthur Samuel, 1959): the ability to learn without being explicitly programmed. Machines learn patterns from data and make decisions on their own.</li>
+</ul>
+<div class="call key"><span class="lbl">The four key components of any ML task</span>
+<p><strong>1. Data</strong> to learn from. <strong>2. A model</strong> that transforms the data. <strong>3. An objective function</strong> that measures how well the model is doing. <strong>4. An optimization algorithm</strong> that adjusts the parameters to optimise the objective.</p></div>
+<div class="tw"><table>
+  <thead><tr><th>Kind of learning</th><th>Data</th><th>Goal</th><th>Examples</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Supervised</strong></td><td>Labeled: features and an output label</td><td>Predict the correct output for new data</td><td>Classification, regression (house prices, medical imaging)</td></tr>
+    <tr><td><strong>Unsupervised</strong></td><td>Unlabeled: features only</td><td>Discover hidden patterns or groupings</td><td>Clustering, customer segmentation, market-basket analysis</td></tr>
+    <tr><td><strong>Reinforcement</strong></td><td>Feedback from an environment</td><td>An agent learns a sequence of decisions from rewards and penalties</td><td>Game playing, control</td></tr>
+  </tbody>
+</table></div>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Task</th><th>What it does</th></tr></thead>
+  <tbody>
+    <tr><td>Classification</td><td>Assigns an input to one of k categories</td></tr>
+    <tr><td>Regression</td><td>Predicts a real-valued label</td></tr>
+    <tr><td>Clustering</td><td>Groups similar points without labels</td></tr>
+    <tr><td>Anomaly detection</td><td>Flags unusual events, such as credit-card fraud</td></tr>
+    <tr><td>Association rules</td><td>Finds “if X then Y” patterns among items</td></tr>
+  </tbody>
+</table></div>
+
+<h3>Biological neuron ↔ artificial neuron</h3>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Biological</th><th>Function</th><th>Artificial</th></tr></thead>
+  <tbody>
+    <tr><td>Dendrites</td><td>receive signals</td><td><strong>Inputs</strong></td></tr>
+    <tr><td>Synapses</td><td>connection strength</td><td><strong>Weights</strong></td></tr>
+    <tr><td>Cell body (soma)</td><td>integrates the signals</td><td><strong>Summation</strong></td></tr>
+    <tr><td>Axon hillock</td><td>decides whether to fire</td><td><strong>Activation function</strong></td></tr>
+    <tr><td>Axon</td><td>transmits the output</td><td><strong>Output</strong></td></tr>
+  </tbody>
+</table></div>
+<p><strong>Anatomy of one neuron:</strong> inputs \(x_i\), weights \(w_i\) (importance of each input), bias \(b\) (shifts the activation), weighted sum \(z = w_1x_1 + \dots + w_nx_n + b\), activation function \(f\), output \(y = f(z)\).</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Term</th><th>Means</th><th>Examples</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Architecture</strong></td><td>How layers and neurons are organised</td><td>Single-layer, two-layer, multi-layer / deep</td></tr>
+    <tr><td><strong>Topology</strong></td><td>How neurons are connected and how data flows</td><td>Feed-forward, recurrent, convolutional</td></tr>
+    <tr><td><strong>Type</strong></td><td>Category based on both</td><td>FNN, RNN, CNN, RBFN, GAN, autoencoder, ResNet</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="single" data-toc="Revise: single layer">Revision · Single-layer networks</h2>
+<p>One layer of neurons connected directly to the inputs, feed-forward. They all compute \(z = w^{\top}x + b\) and differ only in the activation and the loss.</p>
+<div class="tw"><table>
+  <thead><tr><th>Model</th><th>Activation</th><th>Output</th><th>Loss</th><th>Trained by</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Linear regression</strong></td><td>Identity</td><td>\(\hat{y} = z\), any real number</td><td>MSE</td><td>Gradient descent</td></tr>
+    <tr><td><strong>Perceptron</strong></td><td>Step: 1 if \(z \ge 0\)</td><td>0 or 1</td><td>none (not differentiable)</td><td>Perceptron update rule</td></tr>
+    <tr><td><strong>Logistic regression</strong></td><td>Sigmoid</td><td>\(P(y = 1 \mid x)\) in (0, 1)</td><td>Binary cross-entropy</td><td>Gradient descent</td></tr>
+    <tr><td><strong>Multiclass logistic</strong></td><td>Softmax</td><td>K probabilities summing to 1</td><td>Cross-entropy</td><td>Gradient descent</td></tr>
+  </tbody>
+</table></div>
+<h3>Key formulas</h3>
+\[ \text{MSE: } L = \frac{1}{m}\sum_i (z_i - y_i)^2 \qquad \text{Binary CE: } L = -\big[\,y\ln\hat{y} + (1-y)\ln(1-\hat{y})\,\big] \qquad \text{CE: } L = -\sum_k y_k \ln\hat{y}_k \]
+\[ \text{Gradient descent: } w \leftarrow w - \alpha\,\nabla L(w) \qquad \text{Perceptron: } w \leftarrow w + \eta\,(y - \hat{y})\,x,\;\; b \leftarrow b + \eta\,(y - \hat{y}) \]
+<ul>
+  <li><strong>Decision boundary</strong> is \(z = 0\): a line for 2 inputs, a plane for 3. The <strong>bias shifts</strong> it; with no bias it must pass through the origin.</li>
+  <li><strong>Gradients:</strong> linear regression uses \((z - y)\,x\); logistic regression uses \((\hat{y} - y)\,x\) with \(\hat{y} = \sigma(z)\). Same form, different prediction.</li>
+  <li><strong>Logistic decision rule:</strong> class 1 if \(\hat{y} \ge 0.5\), which is the same as \(z \ge 0\).</li>
+  <li><strong>Perceptron:</strong> the step function is not differentiable, so no gradient descent. It converges <strong>only if the data is linearly separable</strong>. An epoch is one full pass over the training set.</li>
+  <li><strong>Why softmax for multiclass:</strong> K separate sigmoids do not sum to 1, which makes no sense when exactly one class is true. Softmax makes the outputs positive, summing to 1, and competing.</li>
+  <li><strong>One-hot encoding:</strong> class k of K becomes a vector of 0s with a 1 in position k. Then \(L = -\ln(\hat{y}_{\text{true}})\). It punishes confident wrong predictions heavily.</li>
+  <li><strong>Prediction</strong> for multiclass: compute softmax, take the <strong>argmax</strong>.</li>
+  <li><strong>Chain rule:</strong> \(\dfrac{dy}{dx} = \dfrac{df}{dg}\cdot\dfrac{dg}{dx}\). Example: \(y = \sin(x^2) \Rightarrow \cos(x^2)\cdot 2x\).</li>
+  <li><strong>Can solve:</strong> linearly separable problems (AND, OR, linear and logistic regression). <strong>Cannot solve:</strong> XOR.</li>
+</ul>
+</section>
+
+<section>
+<h2 id="multi" data-toc="Revise: multi-layer">Revision · Multi-layer networks and activations</h2>
+<h3>Five limitations of a single-layer network</h3>
+<ol>
+  <li>It can only model <strong>linear functions</strong> (works for AND and OR, fails for XOR).</li>
+  <li>It <strong>cannot capture complex patterns</strong>: no curves, clusters or complex boundaries.</li>
+  <li><strong>Limited feature extraction</strong>: no hidden layers, so no intermediate representations.</li>
+  <li><strong>Limited capacity</strong>: few parameters.</li>
+  <li><strong>Sensitive to noisy data</strong>: generalises poorly on noisy or overlapping data.</li>
+</ol>
+<h3>Hidden layers</h3>
+<p>A hidden layer is any layer between the input and the output layer. It contains inputs, weights, a bias and an activation function, and performs intermediate computations. Hidden layers matter because they <strong>introduce non-linearity</strong>, <strong>learn hierarchical features</strong>, <strong>increase expressiveness</strong>, <strong>enable complex decision boundaries</strong> and <strong>make deep learning possible</strong>.</p>
+\[ a^{(l)} = f\big(W^{(l)} a^{(l-1)} + b^{(l)}\big) \qquad \text{stacking layers} = \text{composing functions} \]
+
+<h3>Activation functions</h3>
+<div class="tw"><table>
+  <thead><tr><th>Function</th><th>Formula</th><th>Range</th><th>Derivative</th><th>Remember</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Sigmoid</strong></td><td>\(\dfrac{1}{1+e^{-z}}\)</td><td>(0, 1)</td><td>\(\sigma(1-\sigma)\), at most 0.25</td><td>Smooth; <strong>vanishing gradients</strong>; not zero-centred; slow in deep nets; used in the <strong>output layer for binary classification</strong></td></tr>
+    <tr><td><strong>Tanh</strong></td><td>\(\dfrac{e^{z}-e^{-z}}{e^{z}+e^{-z}}\)</td><td>(−1, 1)</td><td>\(1-\tanh^2\)</td><td>Zero-centred; better than sigmoid for hidden layers; still has vanishing gradients</td></tr>
+    <tr><td><strong>ReLU</strong></td><td>\(\max(0, z)\)</td><td>[0, ∞)</td><td>1 if \(z&gt;0\), else 0</td><td>Cheap; <strong>reduces vanishing gradients</strong>; most common in hidden layers; can suffer from <strong>dying neurons</strong></td></tr>
+    <tr><td><strong>Leaky ReLU</strong></td><td>\(z\) if \(z \ge 0\), else \(\alpha z\)</td><td>(−∞, ∞)</td><td>1 or \(\alpha\)</td><td>Small gradient for negatives, so it <strong>prevents dying neurons</strong></td></tr>
+    <tr><td><strong>Softmax</strong></td><td>\(\dfrac{e^{z_k}}{\sum_j e^{z_j}}\)</td><td>(0, 1), sums to 1</td><td></td><td>Output layer for multi-class</td></tr>
+    <tr><td><strong>Step / identity</strong></td><td>1 if \(z \ge 0\); or \(z\)</td><td>{0, 1}; any</td><td></td><td>Perceptron; linear regression</td></tr>
+  </tbody>
+</table></div>
+<div class="call key"><span class="lbl">Why non-linearity is essential</span>
+<p>Without an activation, \(W_2(W_1 x) = (W_2 W_1)x = Wx\). Any stack of linear layers collapses into one linear layer, however deep. The activation is what lets a network learn curves and solve XOR.</p></div>
+<p><strong>Vanishing gradient:</strong> backprop multiplies one local derivative per layer. Sigmoid and tanh are flat for large \(|z|\), so those derivatives are close to 0, and after many layers the product is almost nothing. The early layers stop learning. ReLU’s derivative is exactly 1 for positive inputs, so the gradient survives.</p>
+
+<h3>From the MLP slides</h3>
+<ul>
+  <li>Linear classifier: \(f(x) = Wx\). 2-layer network: \(f(x) = W_2\,\text{act}(W_1 x)\). 3-layer: \(f(x) = W_3\,\text{act}(W_2\,\text{act}(W_1x))\). “2-layer” means two layers of <strong>weights</strong>.</li>
+  <li>CIFAR-10: \(32\times32\times3 = 3072\) inputs, 10 classes. 2-layer: 3072 → 128 → 10, “learn 128 shared templates instead of 10 separate ones”. 3-layer: 3072 → 512 → 128 → 10.</li>
+  <li><strong>MLP = fully connected network.</strong></li>
+  <li>Traditional vision pipeline: hand-designed features (such as a histogram of gradients), then a linear classifier. Neural networks <strong>learn the features automatically</strong>, and learn features and classifier <strong>end-to-end</strong>, using multiple layers.</li>
+</ul>
+<h3>Types of layered architectures</h3>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Architecture</th><th>Key points</th></tr></thead>
+  <tbody>
+    <tr><td><strong>Single-layer</strong></td><td>No hidden layers; linear boundaries only; cannot solve XOR</td></tr>
+    <tr><td><strong>MLP</strong></td><td>Fully connected layers; non-linear activations; universal function approximator</td></tr>
+    <tr><td><strong>CNN</strong></td><td>Designed for images; local receptive fields; shared weights; Input → Conv → Activation → Pool → Fully connected → Output</td></tr>
+    <tr><td><strong>RNN</strong></td><td>Feedback loops; hidden-state memory; sequential data; trained by backpropagation through time</td></tr>
+    <tr><td><strong>Transformer</strong></td><td>Stacked attention blocks: multi-head attention, feed-forward sub-layer, residual connections, layer normalization</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<section>
+<h2 id="backprop" data-toc="Revise: backprop theory">Revision · Back-propagation theory</h2>
+<ul>
+  <li>Training updates each layer with SGD: \(W_k \leftarrow W_k - \alpha\,\dfrac{\partial e}{\partial W_k}\). Backprop is how you get \(\partial e/\partial W_k\) for every layer.</li>
+  <li>It is the <strong>chain rule</strong>, applied from the <strong>output back to the input</strong>.</li>
+  <li>For any layer: \(\dfrac{\partial e}{\partial W_k} = \underbrace{\dfrac{\partial e}{\partial h_k}}_{\text{from the higher layer}} \cdot \underbrace{\dfrac{\partial h_k}{\partial W_k}}_{\text{current layer}}\)</li>
+  <li>Each layer does two jobs: compute \(\partial h_k/\partial W_k\) to update its own weights, and compute \(\partial h_k/\partial h_{k-1}\) to pass the gradient down: \(\dfrac{\partial e}{\partial h_{k-1}} = \dfrac{\partial e}{\partial h_k}\cdot\dfrac{\partial h_k}{\partial h_{k-1}}\).</li>
+  <li>If a layer’s output feeds two places, the incoming gradients are <strong>added</strong>.</li>
+</ul>
+<div class="tw"><table class="tight">
+  <thead><tr><th>Case on the slides</th><th>Result with L2 loss \(e = (y - h)^2\)</th></tr></thead>
+  <tbody>
+    <tr><td>1 layer, \(h_1 = W_1 x\)</td><td>\(\dfrac{\partial e}{\partial W_1} = -2\,(y - h_1)\,x\)</td></tr>
+    <tr><td>2 layers, \(h_2 = W_2 h_1\)</td><td>\(\dfrac{\partial e}{\partial W_2} = -2\,(y - h_2)\,h_1\) &nbsp;and&nbsp; \(\dfrac{\partial e}{\partial W_1} = -2\,(y - h_2)\,W_2\,x\)</td></tr>
+    <tr><td>1 layer + sigmoid, \(h_2 = \sigma(h_1)\)</td><td>\(\dfrac{\partial e}{\partial W_1} = -2\,(y - h_2)\;\sigma(h_1)\,(1 - \sigma(h_1))\;x\)</td></tr>
+  </tbody>
+</table></div>
+<p>The slides end with “derive the 2-layer case yourself”. The middle row is that derivation: \(\partial e/\partial h_2 = -2(y - h_2)\), \(\partial h_2/\partial h_1 = W_2\), \(\partial h_1/\partial W_1 = x\), and you multiply the three.</p>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="traps" data-toc="Traps in the notes">Traps: where the notes can mislead you</h2>
+<p>I checked every worked number in the course files. These are the places where a note and the correct answer disagree, or where two parts of the course use different conventions.</p>
+<div class="tw"><table>
+  <thead><tr><th>Where</th><th>What the file says</th><th>What to do</th></tr></thead>
+  <tbody>
+    <tr><td>Multi-layer handout, tanh</td><td>Output range (0, 1)</td><td>Tanh is really <strong>(−1, 1)</strong>. If an option says (−1, 1), choose it.</td></tr>
+    <tr><td>Review sheet, Problem 3</td><td>Desired output [1, 2]</td><td>Not one-hot. Apply \(-\sum y_k\ln\hat{y}_k\) to whatever target is printed. See <a href="#softmax">type 3</a>.</td></tr>
+    <tr><td>Quiz 2 key vs review sheet</td><td>Shapes written 12 × 7 while net = XW</td><td>With the bias in the first row and net = XW, write (inputs + 1) × neurons and show the dimension check. See <a href="#shapes">type 2</a>.</td></tr>
+    <tr><td>CNN notebook, 1-D code cell</td><td>Prints [2, −2, −1, 4, −1]</td><td>The formula gives [−2, 2, 1, −4, 1]. The code flips the filter. Slide without flipping unless told otherwise. See the <a href="cnn.html#conv1d">CNN page</a>.</td></tr>
+    <tr><td>Single-layer notes, linear-regression example</td><td>\(w = 0 - 0.1(-10) = 0.1\), and a prediction of 10 for \(5(2) + 3\)</td><td>Arithmetic slips: those are 1.0 and 13. The method and the conclusion (overshoot → lower α) are what matter.</td></tr>
+    <tr><td>Single-layer notes, gradients</td><td>Linear regression omits the \(1/m\); logistic regression includes it</td><td>Use the formula printed in the question. If none is given, state the one you use.</td></tr>
+    <tr><td>Perceptron</td><td>Step outputs 1 when \(z \ge 0\)</td><td>\(z = 0\) is class <strong>1</strong>. That is why (0, 0) is misclassified at the start of the AND example.</td></tr>
+    <tr><td>Layer counting</td><td>“2-layer network”</td><td>Two layers of weights: one hidden and one output. The input is not counted.</td></tr>
+    <tr><td>Cross-entropy</td><td>“log”</td><td>Natural log (ln), as the review sheet states.</td></tr>
+  </tbody>
+</table></div>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="short" data-toc="Short-answer bank">Short-answer bank</h2>
+<p>Quiz 1 was ten 3-point short answers, and its grading key gave marks for specific key ideas. Say the answer out loud, then open it. The words in bold are the ones that earn the marks.</p>
+
+<h4>Asked on Quiz 1</h4>
+<details class="sol"><summary>Supervised vs unsupervised learning, by the data they use</summary><div class="sol-body"><p>Supervised learning uses <strong>labeled data</strong>: input features <strong>and an output label</strong>, and the model learns the relationship so it can predict outputs for new data (house prices, medical imaging). Unsupervised learning uses <strong>unlabeled data</strong>: features only, and the algorithm <strong>discovers hidden patterns or groupings</strong> (customer segmentation, market-basket analysis).</p></div></details>
+<details class="sol"><summary>Why does data matter in machine learning?</summary><div class="sol-body"><p>Data is the first of the four key components. The model <strong>learns from data instead of being explicitly programmed</strong>, each observation is a set of feature values in which the model finds relationships, and the <strong>quality and nature of the data determine what the model can do</strong>.</p></div></details>
+<details class="sol"><summary>Purpose of activation functions, and what happens without them</summary><div class="sol-body"><p>An activation function is applied to a neuron’s weighted sum and <strong>introduces non-linearity</strong>, which lets the network learn complex patterns and curved boundaries. It also shapes the output (sigmoid gives a probability). <strong>Without it the whole network collapses to a single linear model</strong>, however many layers it has.</p></div></details>
+<details class="sol"><summary>What problems can a single-layer network solve?</summary><div class="sol-body"><p><strong>Linearly separable problems</strong>, where one straight line (or plane) separates the classes, and linear input-output relationships. Examples: linear regression, logistic regression, AND and OR with a perceptron.</p></div></details>
+<details class="sol"><summary>Main limitation of a single-layer perceptron</summary><div class="sol-body"><p>It can only produce a <strong>linear decision boundary</strong>, so it only works on linearly separable data. It handles AND and OR but <strong>fails on XOR</strong>. Supporting points: no hidden layers, the step function is not differentiable, and limited capacity.</p></div></details>
+<details class="sol"><summary>Single-layer vs multi-layer network</summary><div class="sol-body"><p>A multi-layer network has one or more <strong>hidden layers with non-linear activations</strong> between input and output. That lets it learn <strong>non-linear decision boundaries</strong> and hierarchical features, and solve XOR. A single-layer network goes straight from input to output and is limited to linear boundaries.</p></div></details>
+<details class="sol"><summary>Why choose the right measurement scale?</summary><div class="sol-body"><p>The scale determines which properties the values have (identity, order, equal intervals, true zero) and therefore <strong>which operations and statistics are valid</strong>. With the wrong scale you do meaningless arithmetic, such as saying 40 °C is twice as hot as 20 °C.</p></div></details>
+<details class="sol"><summary>Which scale for height, weight and age, and why?</summary><div class="sol-body"><p>The <strong>ratio</strong> scale. These satisfy all four properties, including a <strong>true zero</strong>, so <strong>ratios, multiplication and division are meaningful</strong> (20 kg is twice 10 kg).</p></div></details>
+<details class="sol"><summary>Why are NumPy arrays faster than Python lists?</summary><div class="sol-body"><p><strong>Vectorization</strong>: operations are applied to the whole array at once by built-in universal functions instead of element by element in a Python loop. This works because <strong>all elements have the same type</strong>, so the data is stored and processed uniformly.</p></div></details>
+
+<h4>Likely new ones</h4>
+<details class="sol"><summary>Why can’t the perceptron be trained with gradient descent?</summary><div class="sol-body"><p>Its step activation is <strong>not differentiable</strong>, so there is no gradient to follow. It uses the perceptron update rule \(w \leftarrow w + \eta(y - \hat{y})x\) instead, which only changes the weights on a mistake.</p></div></details>
+<details class="sol"><summary>Why softmax and not sigmoid for multi-class classification?</summary><div class="sol-body"><p>Separate sigmoids give independent outputs that <strong>do not sum to 1</strong>, which makes no sense when exactly one class is true. Softmax gives positive outputs that <strong>sum to 1</strong>, so they are a valid probability distribution over the classes.</p></div></details>
+<details class="sol"><summary>What is the vanishing gradient problem and how does ReLU help?</summary><div class="sol-body"><p>During backprop the gradient is a product of local derivatives. Sigmoid and tanh saturate, so their derivatives are near 0 for large inputs, and <strong>the gradient shrinks toward zero in the early layers</strong>, which stop learning. <strong>ReLU’s derivative is 1 for positive inputs</strong>, so the gradient passes through undiminished.</p></div></details>
+<details class="sol"><summary>What is a dying ReLU and how does Leaky ReLU fix it?</summary><div class="sol-body"><p>If a ReLU neuron’s input stays negative, its output and its <strong>gradient are both 0</strong>, so its weights never update again. Leaky ReLU keeps a <strong>small non-zero slope for negative inputs</strong>, so some gradient always flows.</p></div></details>
+<details class="sol"><summary>What is back-propagation?</summary><div class="sol-body"><p>The algorithm that computes the <strong>gradient of the loss with respect to every weight</strong> by applying the <strong>chain rule from the output layer back to the input</strong>. Each layer multiplies the gradient from the higher layer by its own local gradient. Gradient descent then uses those gradients to update the weights.</p></div></details>
+<details class="sol"><summary>What does the bias do?</summary><div class="sol-body"><p>It is a constant added to the weighted sum that <strong>shifts the decision boundary</strong> (shifts the activation). Without it the boundary must pass through the origin.</p></div></details>
+<details class="sol"><summary>What does the learning rate control? Too large? Too small?</summary><div class="sol-body"><p>The <strong>step size</strong> of each weight update. Too large: the update <strong>overshoots</strong> the minimum and the loss can increase. Too small: training is very slow.</p></div></details>
+<details class="sol"><summary>What is a hidden layer and why is it important?</summary><div class="sol-body"><p>Any layer <strong>between the input and output layers</strong>. It transforms the input into intermediate representations, and with a non-linear activation it lets the network learn hierarchical features and complex decision boundaries.</p></div></details>
+<details class="sol"><summary>What is a convolution in a CNN?</summary><div class="sol-body"><p>Sliding a small <strong>filter of learnable weights</strong> over the input and taking a <strong>local dot product</strong> at each position. The result is an <strong>activation map</strong> that is large wherever the filter’s pattern appears.</p></div></details>
+<details class="sol"><summary>Why use a CNN instead of an MLP for images?</summary><div class="sol-body"><p>A filter is small and <strong>shared across all positions</strong>, so a CNN needs <strong>far fewer parameters</strong>, keeps the spatial structure of the image, and detects a feature <strong>wherever it appears</strong>. It also learns its own features instead of relying on hand-crafted ones.</p></div></details>
+<details class="sol"><summary>What is pooling and why is it used?</summary><div class="sol-body"><p>A fixed operation (max or average) applied over small regions of each activation map, with <strong>no learnable weights</strong>. It <strong>reduces the spatial size</strong> and gives <strong>slight translation invariance</strong>, so the exact position of a feature is not critical.</p></div></details>
+<details class="sol"><summary>What is deep learning, and what are its challenges?</summary><div class="sol-body"><p>A modern evolution of neural networks that emphasises <strong>very deep networks, large unstructured datasets and modern compute (GPUs)</strong>. Challenges: <strong>vanishing gradients</strong> (use BatchNorm, skip connections), <strong>overfitting</strong> (regularization, data augmentation) and <strong>needing a lot of data</strong> (transfer learning).</p></div></details>
+</section>
+
+<!-- ===================================================== -->
+<section>
+<h2 id="mcq" data-toc="MCQ drill">MCQ drill</h2>
+<p>62 questions across every topic except CNNs (those are on the <a href="cnn.html#quiz">CNN page</a>). Each one shows the reason as soon as you answer. Your progress is saved in this browser.</p>
+<div id="quiz-review"></div>
+</section>
+
+<section>
+<h2 id="key" data-toc="Review-sheet answer key">Answer key for the review sheet’s 15 MCQs</h2>
+<p>You said you got nearly all of these. Use this to confirm the ones you were unsure about.</p>
+<div class="tw"><table class="tight">
+  <thead><tr><th>#</th><th>About</th><th>Answer</th><th>Why</th></tr></thead>
+  <tbody>
+    <tr><td>1</td><td>Bias term</td><td><strong>C</strong></td><td>Shifts the decision boundary</td></tr>
+    <tr><td>2</td><td>Logistic regression output</td><td><strong>C</strong></td><td>A probability</td></tr>
+    <tr><td>3</td><td>What a perceptron can solve</td><td><strong>C</strong></td><td>Linearly separable problems</td></tr>
+    <tr><td>4</td><td>MSE loss</td><td><strong>B</strong></td><td>Regression</td></tr>
+    <tr><td>5</td><td>Cross-entropy pairing</td><td><strong>C</strong></td><td>Softmax or sigmoid</td></tr>
+    <tr><td>6</td><td>Boundary with 2 inputs</td><td><strong>C</strong></td><td>A line</td></tr>
+    <tr><td>7</td><td>Adding hidden layers</td><td><strong>B</strong></td><td>Learn non-linear functions</td></tr>
+    <tr><td>8</td><td>ReLU reduces</td><td><strong>B</strong></td><td>The vanishing gradient problem</td></tr>
+    <tr><td>9</td><td>CNNs mainly for</td><td><strong>B</strong></td><td>Image processing</td></tr>
+    <tr><td>10</td><td>Computation graph</td><td><strong>C</strong></td><td>A sequence of mathematical operations</td></tr>
+    <tr><td>11</td><td>Backprop computes</td><td><strong>B</strong></td><td>Gradients of the loss</td></tr>
+    <tr><td>12</td><td>Backprop is based on</td><td><strong>C</strong></td><td>The chain rule</td></tr>
+    <tr><td>13</td><td>Direction of gradients</td><td><strong>C</strong></td><td>From output to input</td></tr>
+    <tr><td>14</td><td>10 stacked linear layers</td><td><strong>C</strong></td><td>Equivalent to one linear layer</td></tr>
+    <tr><td>15</td><td>Removing the bias</td><td><strong>B</strong></td><td>Boundary must pass through the origin</td></tr>
+  </tbody>
+</table></div>
+
+<div class="next">
+  <a class="card" href="mock.html"><span class="tag">Next</span><h3>Mock midterm →</h3><p>12 MCQs and 3 problems in the real format. Do it timed, on paper.</p></a>
+  <a class="card" href="cnn.html"><span class="tag">Not done yet?</span><h3>Learn CNN →</h3><p>The one topic you have not studied.</p></a>
+</div>
+</section>
+
+    </main>
+  </div>
+  <footer class="foot"><span>CSE 4311 midterm prep · personal study notes written from the course material</span><a href="index.html">Back to the plan</a></footer>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  MP.graph('#g-review1', {
+    w: 800, h: 320, label: 'Computational graph for f = (x·y)·min(x/y, x)',
+    nodes: [
+      { id: 'x', x: 70, y: 70, label: 'x', kind: 'in', tot: '∂f/∂x = 20 + 20 + 0 = 40', totDy: -30, totDx: 40 },
+      { id: 'y', x: 70, y: 250, label: 'y', kind: 'in', tot: '∂f/∂y = 200 − 200 = 0', totDy: 36, totDx: 40 },
+      { id: 'a', x: 290, y: 60, label: '×' },
+      { id: 'b', x: 290, y: 250, label: '÷' },
+      { id: 'c', x: 470, y: 205, label: 'min' },
+      { id: 'f', x: 630, y: 125, label: '×' },
+      { id: 'o', x: 745, y: 125, label: 'f', kind: 'out' }
+    ],
+    edges: [
+      { from: 'x', to: 'a', f: '20', b: '20' },
+      { from: 'y', to: 'a', f: '2', b: '200', t: 0.82 },
+      { from: 'x', to: 'b', f: '20', b: '20', t: 0.82 },
+      { from: 'y', to: 'b', f: '2', b: '−200' },
+      { from: 'x', to: 'c', f: '20', b: '0', t: 0.7 },
+      { from: 'b', to: 'c', f: '10', b: '40' },
+      { from: 'a', to: 'f', f: '40', b: '10' },
+      { from: 'c', to: 'f', f: '10', b: '40' },
+      { from: 'f', to: 'o', f: '400', b: '1' }
+    ]
+  });
+  MP.graph('#g-quiz2', {
+    w: 820, h: 390, label: 'Computational graph for y = ReLU(w1·x1 + w2·x2 + b)',
+    nodes: [
+      { id: 'w1', x: 60, y: 30, label: 'w₁', kind: 'in' },
+      { id: 'x1', x: 60, y: 120, label: 'x₁', kind: 'in' },
+      { id: 'w2', x: 60, y: 190, label: 'w₂', kind: 'in' },
+      { id: 'x2', x: 60, y: 280, label: 'x₂', kind: 'in' },
+      { id: 'b', x: 60, y: 350, label: 'b', kind: 'in' },
+      { id: 'm1', x: 230, y: 75, label: '×' },
+      { id: 'm2', x: 230, y: 235, label: '×' },
+      { id: 's', x: 390, y: 155, label: '+' },
+      { id: 'z', x: 540, y: 250, label: '+' },
+      { id: 'r', x: 665, y: 250, label: 'ReLU' },
+      { id: 'y', x: 775, y: 250, label: 'y', kind: 'out' }
+    ],
+    edges: [
+      { from: 'w1', to: 'm1', f: '1', b: '2' },
+      { from: 'x1', to: 'm1', f: '2', b: '1' },
+      { from: 'w2', to: 'm2', f: '0.5', b: '1' },
+      { from: 'x2', to: 'm2', f: '1', b: '0.5' },
+      { from: 'm1', to: 's', f: '2', b: '1' },
+      { from: 'm2', to: 's', f: '0.5', b: '1' },
+      { from: 's', to: 'z', f: '2.5', b: '1' },
+      { from: 'b', to: 'z', f: '1', b: '1', t: 0.45 },
+      { from: 'z', to: 'r', f: '3.5', b: '1' },
+      { from: 'r', to: 'y', f: '3.5', b: '1' }
+    ]
+  });
+  MP.graph('#g-sigmoid', {
+    w: 970, h: 350, label: 'Sigmoid computational graph from the MLP slides',
+    nodes: [
+      { id: 'w0', x: 50, y: 30, label: 'w₀', kind: 'in' },
+      { id: 'x0', x: 50, y: 110, label: 'x₀', kind: 'in' },
+      { id: 'w1', x: 50, y: 170, label: 'w₁', kind: 'in' },
+      { id: 'x1', x: 50, y: 250, label: 'x₁', kind: 'in' },
+      { id: 'w2', x: 50, y: 320, label: 'w₂', kind: 'in' },
+      { id: 'm0', x: 190, y: 70, label: '×' },
+      { id: 'm1', x: 190, y: 210, label: '×' },
+      { id: 'a1', x: 310, y: 140, label: '+' },
+      { id: 'a2', x: 420, y: 230, label: '+' },
+      { id: 'n', x: 520, y: 230, label: '×−1' },
+      { id: 'e', x: 625, y: 230, label: 'exp' },
+      { id: 'p', x: 728, y: 230, label: '+1' },
+      { id: 'i', x: 828, y: 230, label: '1/x' },
+      { id: 'o', x: 935, y: 230, label: 'f', kind: 'out' }
+    ],
+    edges: [
+      { from: 'w0', to: 'm0', f: '2.00', b: '−0.20' },
+      { from: 'x0', to: 'm0', f: '−1.00', b: '0.40' },
+      { from: 'w1', to: 'm1', f: '−3.00', b: '−0.40' },
+      { from: 'x1', to: 'm1', f: '−2.00', b: '−0.60' },
+      { from: 'w2', to: 'a2', f: '−3.00', b: '0.20', t: 0.4 },
+      { from: 'm0', to: 'a1', f: '−2.00', b: '0.20' },
+      { from: 'm1', to: 'a1', f: '6.00', b: '0.20' },
+      { from: 'a1', to: 'a2', f: '4.00', b: '0.20' },
+      { from: 'a2', to: 'n', f: '1.00', b: '0.20' },
+      { from: 'n', to: 'e', f: '−1.00', b: '−0.20' },
+      { from: 'e', to: 'p', f: '0.37', b: '−0.53' },
+      { from: 'p', to: 'i', f: '1.37', b: '−0.53' },
+      { from: 'i', to: 'o', f: '0.73', b: '1.00' }
+    ]
+  });
+  MP.quiz('#quiz-review', MP.Q.review, { id: 'review' });
+});
+</script>
+</body>
+</html>
